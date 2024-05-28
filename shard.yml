@@ -1,0 +1,15 @@
+name: poor
+version: 0.1.0
+authors:
+  - Jan Singon Slany <singond@seznam.cz>
+# license: Apache-2.0
+# license: MIT
+# repository: "https://github.com/Singond/crystal-poor.git"
+
+description: |
+  A library for producing basic rich text with Crystal.
+
+# dependencies:
+#   pg:
+#     github: will/crystal-pg
+#     version: "~> 0.5"
