@@ -1,3 +1,4 @@
+require "colorize"
 require "string_scanner"
 require "./markup"
 
