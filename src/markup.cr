@@ -264,15 +264,6 @@ module Poor
 	struct Base < Container
 	end
 
-	private def to_markup(value : Markup | String) : Markup
-		case value
-		in Markup
-			value
-		in String
-			PlainText.new(value)
-		end
-	end
-
 	def markup()
 		Base.new()
 	end
@@ -420,5 +411,14 @@ module Poor
 
 	def labeled_paragraph(label : String, *content : Markup | String, **args)
 		LabeledParagraph.new(label, *content, **args)
+	end
+end
+
+private def to_markup(value : Poor::Markup | String) : Poor::Markup
+	case value
+	in Poor::Markup
+		value
+	in String
+		Poor::PlainText.new(value)
 	end
 end
