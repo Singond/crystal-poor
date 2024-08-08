@@ -137,5 +137,21 @@ Lipsum = markup(
 			Sed sit amet tellus et velit luctus laoreet quis sed urna. \
 			Sed dictum fringilla nibh sit amet tempor.
 			TEXT
+	),
+	paragraph(<<-TEXT,
+		Nascetur neque suspendisse, ante in aliquet suspendisse et inceptos. \
+		Vivamus curabitur semper fames etiam maecenas sollicitudin lectus. \
+		Facilisis lorem maecenas mollis; pellentesque convallis justo tellus.
+		TEXT
+		preformatted(<<-PRE),
+		public static void main (String... args) {
+		    System.out.prinln("Hello, world!");
+		}
+		PRE
+		<<-TEXT
+			Magna feugiat in dui morbi nulla etiam duis donec quis. \
+			Nulla dolor dapibus sit aliquam hac ex vehicula torquent. \
+			Bibendum facilisis viverra dui penatibus molestie non.
+			TEXT
 	)
 )

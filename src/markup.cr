@@ -359,6 +359,33 @@ module Poor
 		Paragraph.new(*content)
 	end
 
+	struct Preformatted < Markup
+		def initialize(@text : String)
+		end
+
+		def text(io : IO)
+			io << @text
+		end
+
+		def to_html(io : IO)
+			io << "<pre>"
+			io << @text
+			io << "</pre>"
+		end
+
+		def inspect(io : IO)
+			io << @text
+		end
+
+		def pretty_print(pp : PrettyPrint)
+			pp.text @text
+		end
+	end
+
+	def preformatted(*content : String)
+		Preformatted.new(*content)
+	end
+
 	struct OrderedList < Container
 		@@html_tag = "ol"
 

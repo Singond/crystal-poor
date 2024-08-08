@@ -5,6 +5,7 @@ Changelog
 ------------
 ### Added
 - This changelog.
+- Container for preformatted text (like code blocks). See `Preformatted`.
 
 ### Fixed
 - Compile-time error when the module was used without `include`.

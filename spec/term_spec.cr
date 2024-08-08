@@ -9,6 +9,9 @@ include Poor
 wrap_80 = TerminalStyle.new
 wrap_80.line_width = 80
 
+wrap_60 = TerminalStyle.new
+wrap_60.line_width = 60
+
 just_80 = TerminalStyle.new
 just_80.line_width = 80
 just_80.justify = true
@@ -612,6 +615,28 @@ describe LabeledParagraph do
 			    Curabitur pulvinar purus imperdiet purus fringilla,
 			    venenatis facilisis quam efficitur. Nunc justo diam,
 			    interdum ut varius a, laoreet ut justo.
+
+			EXPECTED
+			#------------------------ 60 chars ------------------------#
+	end
+end
+
+describe Preformatted do
+	it do
+		formatted = String.build {|io| format Lipsum[6], io, wrap_60}
+		formatted.should eq <<-EXPECTED
+			Nascetur neque suspendisse, ante in aliquet suspendisse et
+			inceptos. Vivamus curabitur semper fames etiam maecenas
+			sollicitudin lectus. Facilisis lorem maecenas mollis;
+			pellentesque convallis justo tellus.
+
+			    public static void main (String... args) {
+			        System.out.prinln("Hello, world!");
+			    }
+
+			Magna feugiat in dui morbi nulla etiam duis donec quis.
+			Nulla dolor dapibus sit aliquam hac ex vehicula torquent.
+			Bibendum facilisis viverra dui penatibus molestie non.
 
 			EXPECTED
 			#------------------------ 60 chars ------------------------#

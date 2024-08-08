@@ -13,6 +13,7 @@ module Poor
 		property right_margin = 0
 		property list_indent = 4
 		property list_marker_alignment = Alignment::Right
+		property preformatted_indent = 4
 
 		DEFAULT = TerminalStyle.new
 	end
@@ -252,6 +253,19 @@ module Poor
 			@lw.flush unless @lw.empty?
 			@pending_whitespace = "\n"
 			dedent
+		end
+
+		private def open(e : Preformatted)
+			@lw.flush unless @lw.empty?
+			@io << "\n"
+			left_skip = @indentation.sum + @style.preformatted_indent
+			e.text.each_line do |line|
+				left_skip.times do
+					@io << " "
+				end
+				@io << line << "\n"
+			end
+			@io << "\n"
 		end
 
 		private def open(e)
