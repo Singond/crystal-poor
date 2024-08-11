@@ -14,6 +14,7 @@ module Poor
 		property list_indent = 4
 		property list_marker_alignment = Alignment::Right
 		property preformatted_indent = 4
+		property code_style : Colorize::Object(String) = Colorize.with.bright
 
 		DEFAULT = TerminalStyle.new
 	end
@@ -259,11 +260,13 @@ module Poor
 			@lw.flush unless @lw.empty?
 			@io << "\n"
 			left_skip = @indentation.sum + @style.preformatted_indent
-			e.text.each_line do |line|
-				left_skip.times do
-					@io << " "
+			@style.code_style.surround(@io) do
+				e.text.each_line do |line|
+					left_skip.times do
+						@io << " "
+					end
+					@io << line << "\n"
 				end
-				@io << line << "\n"
 			end
 			@io << "\n"
 		end
