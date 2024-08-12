@@ -623,7 +623,9 @@ end
 
 describe Preformatted do
 	it do
-		formatted = String.build {|io| format Lipsum[6], io, wrap_60}
+		style = wrap_60
+		style.code_style = Colorize.with
+		formatted = String.build {|io| format Lipsum[6], io, style}
 		formatted.should eq <<-EXPECTED
 			Nascetur neque suspendisse, ante in aliquet suspendisse et
 			inceptos. Vivamus curabitur semper fames etiam maecenas
