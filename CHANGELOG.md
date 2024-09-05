@@ -5,7 +5,8 @@ Changelog
 ------------
 ### Added
 - This changelog.
-- Container for preformatted text (like code blocks). See `Preformatted`.
+- Containers for inline code and preformatted text (like code blocks).
+  See `Code` and `Preformatted`.
 
 ### Fixed
 - Compile-time error when the module was used without `include`.

@@ -244,6 +244,30 @@ module Poor
 		end
 	end
 
+	abstract struct TextContainer < Markup
+		@value : PlainText
+		@@html_tag : String = ""
+
+		def initialize(text : String)
+			@value = PlainText.new(text)
+		end
+
+		def children
+			[@value] of Markup
+		end
+
+		def text(io : IO)
+			io << @value
+		end
+
+		def to_html(io : IO)
+			tag = @@html_tag
+			io << "<" << tag << ">" unless tag.empty?
+			io << @value
+			io << "</" << tag << ">" unless tag.empty?
+		end
+	end
+
 	struct PlainText < Markup
 		def initialize(@text : String)
 		end
@@ -347,6 +371,14 @@ module Poor
 		Small.new(*content)
 	end
 
+	struct Code < TextContainer
+		@@html_tag = "code"
+	end
+
+	def code(content : String)
+		Code.new(content)
+	end
+
 	struct Paragraph < Container
 		@@html_tag = "p"
 		# def text(io : IO)
@@ -359,26 +391,9 @@ module Poor
 		Paragraph.new(*content)
 	end
 
-	struct Preformatted < Markup
-		def initialize(@text : String)
-		end
-
-		def text(io : IO)
-			io << @text
-		end
-
-		def to_html(io : IO)
-			io << "<pre>"
-			io << @text
-			io << "</pre>"
-		end
-
-		def inspect(io : IO)
-			io << @text
-		end
-
-		def pretty_print(pp : PrettyPrint)
-			pp.text @text
+	struct Preformatted < TextContainer
+		def initialize(text : String)
+			super(text)
 		end
 	end
 

@@ -188,6 +188,16 @@ describe "#format" do
 	end
 end
 
+describe Code do
+	it "prints inline code with defined *code_style*" do
+		m = markup("This is an inline ", code("code"), " sample");
+		style = wrap_60
+		style.code_style = Colorize.with.underline
+		formatted = String.build {|io| format m, io, style}
+		formatted.should eq "This is an inline\e[4m code\e[0m sample\n"
+	end
+end
+
 describe Paragraph do
 	it "is separated from surrounding text and paragraphs by blank lines" do
 		style = TerminalStyle.new()

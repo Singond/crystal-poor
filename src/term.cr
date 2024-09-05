@@ -33,6 +33,7 @@ module Poor
 		@bold = 0
 		@italic = 0
 		@dim = 0
+		@code = 0
 		@lists = [] of OrderedList | UnorderedList
 		@numbering = Deque(Int32).new
 		@in_ordered_list = false
@@ -120,7 +121,11 @@ module Poor
 
 		private def open(e : PlainText)
 			return if e.text.empty?
-			c = Colorize.with
+			if @code > 0
+				c = @style.code_style
+			else
+				c = Colorize.with
+			end
 			if @bold > 0
 				c = c.bold
 			end
@@ -173,6 +178,14 @@ module Poor
 
 		private def close(e : Small)
 			@dim -= 1;
+		end
+
+		private def open(e : Code)
+			@code += 1;
+		end
+
+		private def close(e : Code)
+			@code -= 1;
 		end
 
 		private def open(e : Paragraph)
