@@ -1,5 +1,6 @@
 require "colorize"
 require "string_scanner"
+require "./formatter"
 require "./markup"
 
 module Poor
@@ -26,6 +27,7 @@ module Poor
 	end
 
 	class TerminalFormatter
+		include Formatter
 		@style : TerminalStyle
 		@io : IO
 		@pending_whitespace = ""
@@ -39,6 +41,7 @@ module Poor
 		@in_ordered_list = false
 		@indentation = Deque(Int32).new
 		@lw : LineWrapper
+		@root : Markup?
 
 		def initialize(@style, @io = STDOUT)
 			@lw = LineWrapper.new(@io, @style.line_width, @style.justify)
@@ -46,18 +49,21 @@ module Poor
 			@lw.right_skip = @style.right_margin
 		end
 
-		def format(text : Markup)
-			#whitespace_written = false
-			text.each do |e, start|
-				if start
-					@whitespace_written = false
-					open(e)
-					@pending_whitespace = "" if @whitespace_written
-				else
-					close(e)
-				end
+		def open_element(element : Markup)
+			if @root.nil?
+				@root = element
 			end
-			@lw.flush unless @lw.empty?
+			@whitespace_written = false
+			open(element)
+			@pending_whitespace = "" if @whitespace_written
+		end
+
+		def close_element(element : Markup)
+			close(element)
+			if element == @root
+				@lw.flush unless @lw.empty?
+				@root = nil
+			end
 		end
 
 		# Increases the default `left_skip` by *amount*.

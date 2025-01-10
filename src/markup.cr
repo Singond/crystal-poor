@@ -90,6 +90,16 @@ module Poor
 			end
 		end
 
+		def each_token
+			each do |elem, start|
+				if start
+					yield elem
+				else
+					yield Token::End
+				end
+			end
+		end
+
 		def each
 			MarkupIterator.new(self)
 		end
@@ -454,6 +464,10 @@ module Poor
 	def labeled_paragraph(label : String, *content : Markup | String, **args)
 		LabeledParagraph.new(label, *content, **args)
 	end
+end
+
+enum Poor::Token
+	End
 end
 
 private def to_markup(value : Poor::Markup | String) : Poor::Markup
