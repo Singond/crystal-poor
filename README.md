@@ -35,7 +35,7 @@ Poor is a library for producing basic formatted text from Crystal programs.
       configurable.
 ```
 
-The above exapmle was produced with the following source code:
+The above example was produced with the following source code:
 ```
 lipsum = Poor.markup(
 	Poor.paragraph(<<-PAR),
