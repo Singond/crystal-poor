@@ -32,10 +32,29 @@ lipsum = Poor.markup(
 				This is an ordered list in one paragraph with the preceding \
 				few sentences (starting with “This is a sample”).
 				ITEM
-			Poor.item(<<-ITEM)
+			Poor.item(<<-ITEM),
 				Text justification by widening existing whitespace. \
 				This example is justified.
 				ITEM
+			Poor.item(<<-ITEM, Poor.preformatted(<<-PRE), <<-MORE)
+				Printing pre-formatted text (such as code examples) as-is, \
+				with the line breaks unchanged. \
+				The following code block is embedded inside this list item:
+				ITEM
+				def to_html(io : IO)
+				    tag = @@html_tag
+				    io << "<" << tag << ">" unless tag.empty?
+				    @value.reduce "" do |alltext, elem|
+				        io << elem.to_html
+				    end
+				    io << "</" << tag << ">" unless tag.empty?
+				end
+				PRE
+				The block is indented with respect to the parent block \
+				(list item in this case). \
+				This example uses the default indent, but the amount \
+				is configurable.
+				MORE
 		)
 	)
 )
