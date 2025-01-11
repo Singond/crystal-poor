@@ -401,9 +401,20 @@ module Poor
 		Paragraph.new(*content)
 	end
 
-	struct Preformatted < TextContainer
-		def initialize(text : String)
-			super(text)
+	struct Preformatted < Markup
+		def initialize(@text : String)
+		end
+
+		def text(io : IO)
+			io << @text
+		end
+
+		def inspect(io : IO)
+			io << @text
+		end
+
+		def pretty_print(pp : PrettyPrint)
+			pp.text @text
 		end
 	end
 
