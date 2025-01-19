@@ -58,15 +58,15 @@ describe Markdown do
 
 		it "can parse headings" do
 			# TODO: Change Bold to heading, once implemented
-			doc.children[0].is_a? Bold
+			doc.children[0].should be_a Bold
 			doc.children[0].text.should eq "Lorem Ipsum"
-			doc.children[2].is_a? Bold
+			doc.children[2].should be_a Bold
 			doc.children[2].text.should eq "Dolor Sit Amet"
-			doc.children[4].is_a? Bold
+			doc.children[4].should be_a Bold
 			doc.children[4].text.should eq "Vestibulum Laoreet"
-			doc.children[6].is_a? Bold
+			doc.children[6].should be_a Bold
 			doc.children[6].text.should eq "Ut Congue"
-			doc.children[8].is_a? Bold
+			doc.children[8].should be_a Bold
 			doc.children[8].text.should eq "Consectetur Adipisci Elit"
 		end
 
