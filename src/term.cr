@@ -305,6 +305,13 @@ module Poor
 		TerminalFormatter.new(style, io).format(text)
 	end
 
+	# Formats the given *text* for display in terminal
+	# and returns it as a string.
+	def format_to_s(text : Markup,
+			style : TerminalStyle = TerminalStyle::DEFAULT) : String
+		String.build { |io| format(text, io, style) }
+	end
+
 	private struct Printable
 		getter value : String
 		getter length : Int32

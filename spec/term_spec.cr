@@ -89,11 +89,11 @@ end
 describe "#format" do
 	context "in default configuration" do
 		it "does not wrap lines" do
-			formatted = String.build {|io| format Lipsum[0], io}
+			formatted = format_to_s Lipsum[0]
 			formatted.each_line.size.should eq 1
-			formatted = String.build {|io| format Lipsum[1], io}
+			formatted = format_to_s Lipsum[1]
 			formatted.each_line.size.should eq 1
-			formatted = String.build {|io| format Lipsum[2], io}
+			formatted = format_to_s Lipsum[2]
 			formatted.each_line.size.should eq 1
 		end
 	end
@@ -103,34 +103,34 @@ describe "#format" do
 				Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
 				Etiam nec tortor id magna vulputate pretium.
 				TEXT
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 		end
 		it "stretches multi-part text to fill lines" do
 			m = markup(
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. ",
 				"Etiam nec tortor id ", "magna", " vulputate pretium.")
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 		end
 		it "stretches marked-up text to fill lines" do
 			m = markup(
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. ",
 				"Etiam nec tortor id ", bold("magna"), " vulputate pretium.")
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 		end
 		it "stretches a plain paragraph to fill lines" do
 			m = Lipsum[0]
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 		end
 		it "stretches marked-up paragraph to fill lines" do
 			m = Lipsum[1]
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 			m = Lipsum[2]
-			formatted = String.build {|io| format m, io, just_80}
+			formatted = format_to_s m, just_80
 			formatted.should_be_justified(80)
 		end
 	end
@@ -138,27 +138,27 @@ describe "#format" do
 		it "stretches text to configured width" do
 			# To 80 characters
 			just = just_80
-			formatted = String.build {|io| format Lipsum[1], io, just}
+			formatted = format_to_s Lipsum[1], just
 			formatted.should_be_justified(80)
-			formatted = String.build {|io| format Lipsum[2], io, just}
+			formatted = format_to_s Lipsum[2], just
 			formatted.should_be_justified(80)
 			# To 60 characters
 			just.line_width = 60
-			formatted = String.build {|io| format Lipsum[1], io, just}
+			formatted = format_to_s Lipsum[1], just
 			formatted.should_be_justified(60)
-			formatted = String.build {|io| format Lipsum[2], io, just}
+			formatted = format_to_s Lipsum[2], just
 			formatted.should_be_justified(60)
 			# To 40 characters
 			just.line_width = 40
-			formatted = String.build {|io| format Lipsum[1], io, just}
+			formatted = format_to_s Lipsum[1], just
 			formatted.should_be_justified(40)
-			formatted = String.build {|io| format Lipsum[2], io, just}
+			formatted = format_to_s Lipsum[2], just
 			formatted.should_be_justified(40)
 			# To 100 characters
 			just.line_width = 100
-			formatted = String.build {|io| format Lipsum[1], io, just}
+			formatted = format_to_s Lipsum[1], just
 			formatted.should_be_justified(100)
-			formatted = String.build {|io| format Lipsum[2], io, just}
+			formatted = format_to_s Lipsum[2], just
 			formatted.should_be_justified(100)
 		end
 	end
@@ -168,7 +168,7 @@ describe "#format" do
 			style.paragraph_indent = 2
 			style.left_margin = 2
 			style.right_margin = 2
-			formatted = String.build {|io| format Lipsum[1], io, style}
+			formatted = format_to_s Lipsum[1], style
 			formatted.each_line.with_index do |line, number|
 				visible = line.gsub(/\e\[[0-9]+m/, "")
 				if number == 0
@@ -193,7 +193,7 @@ describe Code do
 		m = markup("This is an inline ", code("code"), " sample");
 		style = wrap_60
 		style.code_style = Colorize.with.underline
-		formatted = String.build {|io| format m, io, style}
+		formatted = format_to_s m, style
 		formatted.should eq "This is an inline\e[4m code\e[0m sample\n"
 	end
 end
@@ -213,7 +213,7 @@ describe Paragraph do
 				Maecenas et mollis risus, in facilisis nisl.
 				PAR
 			"Outside paragraph again.")
-		formatted = String.build {|io| format m, io, style}
+		formatted = format_to_s m, style
 		formatted.should eq <<-EXPECTED
 			Line outside paragraph.
 
@@ -234,7 +234,7 @@ describe Paragraph do
 	it "can have the first line indented" do
 		style = just_80
 		style.paragraph_indent = 4
-		formatted = String.build {|io| format Lipsum[1], io, style}
+		formatted = format_to_s Lipsum[1], style
 		formatted.each_line.with_index do |line, number|
 			if number == 0
 				line.starts_with?("    ").should be_true
@@ -252,7 +252,7 @@ describe Paragraph do
 					Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 					PAR
 				"Outside paragraph again.")
-			formatted = String.build {|io| format m, io, style}
+			formatted = format_to_s m, style
 			formatted.should eq <<-EXPECTED
 				Line outside paragraph.
 
@@ -273,7 +273,7 @@ describe Paragraph do
 					Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 					PAR
 				"Outside paragraph again.")
-			formatted = String.build {|io| format m, io, style}
+			formatted = format_to_s m, style
 			formatted.should eq <<-EXPECTED
 				Line outside paragraph.
 
@@ -291,7 +291,7 @@ end
 
 describe OrderedList do
 	it "prints list items on new lines with indent" do
-		formatted = String.build {|io| format Lipsum[3], io, wrap_80}
+		formatted = format_to_s Lipsum[3], wrap_80
 		formatted.should eq <<-EXPECTED
 			Donec sit amet facilisis lectus. Integer et fringilla velit. Sed aliquam eros ac
 			turpis tristique mollis. Maecenas luctus magna ac elit euismod fermentum.
@@ -312,7 +312,7 @@ describe OrderedList do
 		style = TerminalStyle.new()
 		style.line_width = 60
 		style.list_indent = 6
-		formatted = String.build {|io| format Lipsum[3], io, style}
+		formatted = format_to_s Lipsum[3], style
 		formatted.should eq <<-EXPECTED
 			Donec sit amet facilisis lectus. Integer et fringilla velit.
 			Sed aliquam eros ac turpis tristique mollis. Maecenas luctus
@@ -340,7 +340,7 @@ describe OrderedList do
 		style.left_margin = 2
 		style.right_margin = 2
 		style.list_indent = 6
-		formatted = String.build {|io| format Lipsum[3], io, style}
+		formatted = format_to_s Lipsum[3], style
 		formatted.should eq <<-EXPECTED
 			  Donec sit amet facilisis lectus. Integer et fringilla velit.
 			  Sed aliquam eros ac turpis tristique mollis. Maecenas luctus
@@ -370,7 +370,7 @@ describe OrderedList do
 		style.list_indent = 6
 		list = markup("x " * 36, ordered_list(
 			item("x " * 40), item("x " * 5), item("x " * 40)))
-		formatted = String.build {|io| format list, io, style}
+		formatted = format_to_s list, style
 		formatted.should eq <<-EXPECTED
 			  x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 			  x x x x x x
@@ -391,7 +391,7 @@ describe OrderedList do
 			style.list_marker_alignment = Alignment::Right
 			list = markup("x " * 24, ordered_list(
 				item("x " * 5), item("x " * 20)))
-			formatted = String.build {|io| format list, io, style}
+			formatted = format_to_s list, style
 			formatted.should eq <<-EXPECTED
 				x x x x x x x x x x x x x x x x x x x x
 				x x x x
@@ -418,7 +418,7 @@ describe OrderedList do
 			item("augue"),
 			item("sed"),
 			item("dictum"))
-			formatted = String.build {|io| format m, io, wrap_80}
+			formatted = format_to_s m, wrap_80
 			formatted.should eq <<-EXPECTED + "\n"
 				 1. Nulla
 				 2. vulputate
@@ -436,7 +436,7 @@ describe OrderedList do
 		end
 		context "with a nested list" do
 			it "prints list items on new lines with indent" do
-				formatted = String.build {|io| format Lipsum[4], io, wrap_80}
+				formatted = format_to_s Lipsum[4], wrap_80
 				formatted.should eq <<-EXPECTED
 					Donec sit amet facilisis lectus. Integer et fringilla velit. Sed aliquam eros ac
 					turpis tristique mollis. Maecenas luctus magna ac elit euismod fermentum.
@@ -464,7 +464,7 @@ describe OrderedList do
 				style.left_margin = 2
 				style.right_margin = 2
 				style.list_indent = 6
-				formatted = String.build {|io| format Lipsum[4], io, style}
+				formatted = format_to_s Lipsum[4], style
 				formatted.should eq <<-EXPECTED
 					  Donec sit amet facilisis lectus. Integer et fringilla velit.
 					  Sed aliquam eros ac turpis tristique mollis. Maecenas luctus
@@ -504,7 +504,7 @@ describe OrderedList do
 			style.list_marker_alignment = Alignment::Left
 			list = markup("x " * 24, ordered_list(
 				item("x " * 5), item("x " * 20)))
-			formatted = String.build {|io| format list, io, style}
+			formatted = format_to_s list, style
 			formatted.should eq <<-EXPECTED
 				x x x x x x x x x x x x x x x x x x x x
 				x x x x
@@ -517,14 +517,14 @@ describe OrderedList do
 		end
 	end
 	# it "can stretch several paragraphs to fill lines" do
-	# 	formatted = String.build {|io| format Lipsum, io}
+	# 	formatted = format_to_s Lipsum, io}
 	# 	formatted.should_be_justified(80)
 	# end
 end
 
 describe UnorderedList do
 	it "prints list items on new lines with indent" do
-		formatted = String.build {|io| format Lipsum[5], io, wrap_80}
+		formatted = format_to_s Lipsum[5], wrap_80
 		formatted.should eq <<-EXPECTED
 			Donec sit amet facilisis lectus. Integer et fringilla velit. Sed aliquam eros ac
 			turpis tristique mollis. Maecenas luctus magna ac elit euismod fermentum.
@@ -547,7 +547,7 @@ describe Item do
 	it "produces an error if not in a list" do
 		m = markup(item("Item outside of a list"))
 		expect_raises(Exception, "Item without enclosing list") do
-			String.build {|io| format m, io, wrap_80}
+			format_to_s m, wrap_80
 		end
 	end
 end
@@ -560,7 +560,7 @@ describe LabeledParagraph do
 			Lipsum[3][0],
 			labeled_paragraph("Lorem Ipsum", Lipsum[0], indent: 4)
 		)
-		formatted = String.build {|io| format m, io, style}
+		formatted = format_to_s m, style
 		formatted.should eq <<-EXPECTED
 			Donec sit amet facilisis lectus. Integer et fringilla velit.
 
@@ -585,7 +585,7 @@ describe LabeledParagraph do
 		style = TerminalStyle.new()
 		style.line_width = 60
 		m = LabeledParagraph.new "-v", Lipsum[3][0], indent: 4
-		formatted = String.build {|io| format m, io, style}
+		formatted = format_to_s m, style
 		formatted.should eq <<-EXPECTED
 			-v  Donec sit amet facilisis lectus. Integer et fringilla
 			    velit.
@@ -604,7 +604,7 @@ describe LabeledParagraph do
 			labeled_paragraph("Sit", Lipsum[3][3][2].text, indent: 4),
 			labeled_paragraph("Amet", Lipsum[3][3][0].text, indent: 4)
 		)
-		formatted = String.build {|io| format m, io, style}
+		formatted = format_to_s m, style
 		formatted.should eq <<-EXPECTED
 			Lorem Ipsum
 			    Curabitur pulvinar purus imperdiet purus fringilla,
@@ -635,7 +635,7 @@ describe Preformatted do
 	it do
 		style = wrap_60
 		style.code_style = Colorize.with
-		formatted = String.build {|io| format Lipsum[6], io, style}
+		formatted = format_to_s Lipsum[6], style
 		formatted.should eq <<-EXPECTED
 			Nascetur neque suspendisse, ante in aliquet suspendisse et
 			inceptos. Vivamus curabitur semper fames etiam maecenas
