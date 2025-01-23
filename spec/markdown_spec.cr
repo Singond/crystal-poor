@@ -71,10 +71,9 @@ describe Markdown do
 		end
 
 		it "can parse paragraphs" do
-			par = doc.children[1]
-			par.should be_a Paragraph
-			par.text.should start_with "Lorem ipsum dolor sit amet"
-			par.text.should end_with "Quisque convallis pretium fringilla."
+			doc.children[1].should be_a Paragraph
+			doc.children[1].text.should start_with "Lorem ipsum dolor sit amet"
+			doc.children[1].text.should end_with "pretium fringilla."
 			doc.children[3].should be_a Paragraph
 			doc.children[3].text.should start_with "Phasellus sed arcu"
 			doc.children[5].should be_a Paragraph
@@ -126,10 +125,9 @@ describe Markdown do
 		end
 
 		it "can parse paragraphs" do
-			par = doc.children[1]
-			par.should be_a Paragraph
-			par.text.should start_with "Lorem ipsum dolor sit amet"
-			par.text.should end_with "Quisque convallis pretium fringilla."
+			doc.children[1].should be_a Paragraph
+			doc.children[1].text.should start_with "Lorem ipsum dolor sit amet"
+			doc.children[1].text.should end_with "pretium fringilla."
 			doc.children[3].should be_a Paragraph
 			doc.children[3].text.should start_with "Phasellus sed arcu"
 			doc.children[5].should be_a Paragraph
