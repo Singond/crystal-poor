@@ -2,16 +2,22 @@ require "log"
 require "./builder"
 require "./markup"
 
+# Basic Markdown parser.
 module Poor::Markdown
+
+	# Parses the content of *io* and adds each top-level block
+	# represented as `Markup` to *builder*.
 	def self.parse(io : IO, builder : Poor::Builder | Poor::Stream)
 		builder.start(Base.new)
-		parse_blocks(io, builder) do |block|
+		each_top_level_block(io) do |block|
 			builder.add(block.build)
 		end
 		builder.finish
 	end
 
-	private def self.parse_blocks(io : IO, b : Poor::Builder | Poor::Stream)
+	# Parses the content of *io* and yields each top-level block
+	# as `Markup`.
+	def self.each_top_level_block(io : IO)
 		parents = Deque(MarkdownBlock).new
 		lineno = 0
 		io.each_line do |line|
@@ -93,6 +99,9 @@ module Poor::Markdown
 		end
 	end
 
+	# Determines whether *str* is a setext heading underline,
+	# that is a line, optionally indented by up to three spaces,
+	# consisting entirely of '=' or entirely of '-' characters.
 	private def self.setext_underline?(str : String) : Int8?
 		chars = str.each_char
 		spaces = 0
@@ -126,6 +135,7 @@ module Poor::Markdown
 	end
 end
 
+# A block element in a Markdown document.
 private class MarkdownBlock
 	property type : Markup
 	property children : Array(MarkdownBlock) = [] of MarkdownBlock
@@ -134,6 +144,7 @@ private class MarkdownBlock
 	def initialize(@type)
 	end
 
+	# Converts the tree of Markdown elements under `self` into `Markup`.
 	def build : Markup
 		result = @type
 		children.each do |child|
