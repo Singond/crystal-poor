@@ -56,7 +56,7 @@ module Poor::Markdown
 			new_block = starts_block?(line)
 			insert_line = new_block.nil?
 			if new_block.nil? && parents.empty?
-				new_block = MarkdownBlock.new(Paragraph.new)
+				new_block = MarkdownBlock.new(MarkdownParagraph.new)
 				insert_line = true
 			end
 			if new_block
@@ -78,11 +78,11 @@ module Poor::Markdown
 	end
 
 	private def self.continues_block?(line, block : MarkdownBlock) : {Bool, String?}
-		case block.type
-		when Paragraph
+		case type = block.type
+		when MarkdownParagraph
 			if level = setext_underline?(line)
 				Log.debug { "Line is a setext underline, changing block type" }
-				block.type = Bold.new  # TODO: Change to heading
+				block.type = MarkdownHeading.new
 				return {false, nil}
 			elsif starts_block?(line)
 				return {false, line}
@@ -90,6 +90,11 @@ module Poor::Markdown
 			unless line.empty?
 				return {true, line}
 			end
+		when MarkdownFence
+			if (fence = code_fence?(line)) && fence.ends?(type)
+				return {false, nil}
+			end
+			return {true, line}
 		end
 		{false, line}
 	end
@@ -98,8 +103,12 @@ module Poor::Markdown
 		if line.starts_with?('#')
 			count = line.each_char.take_while{ |c| c == '#' }.size
 			if line.char_at(count) == ' '
-				MarkdownBlock.new(Bold.new(line[count+1..]))
+				block = MarkdownBlock.new(MarkdownHeading.new)
+				block.content << line[count+1..]
+				return block
 			end
+		elsif fence = code_fence?(line)
+			return MarkdownFencedCodeBlock.new(fence)
 		end
 	end
 
@@ -120,6 +129,14 @@ module Poor::Markdown
 			end
 		end
 		nil
+	end
+
+	def self.code_fence?(str : String) : MarkdownFence?
+		length, type, indent, infostr = self.repeated_char?(
+			str, {'`', '~'}, max_indent: 3)
+		if length >= 3
+			MarkdownFence.new(length, type, indent, infostr)
+		end
 	end
 
 	# Determines whether *str* starts with a repetition of a single character
@@ -144,15 +161,15 @@ module Poor::Markdown
 
 		# Count the repeated characters
 		count = 1
-		if c.in? characters
+		if c.is_a? Char && c.in? characters
 			while chars.next == c
 				count += 1
 			end
 		else
-			c = nil
+			c = '\0'
 		end
 
-		{count, c, indent, str[indent+count..]}
+		{count, c, indent, str[indent+count..]? || ""}
 	end
 
 	private def self.parse_inline(line : String)
@@ -161,7 +178,7 @@ end
 
 # A block element in a Markdown document.
 private class MarkdownBlock
-	property type : Markup
+	property type : BlockType
 	property children : Array(MarkdownBlock) = [] of MarkdownBlock
 	property content : Array(String) = [] of String
 
@@ -170,7 +187,7 @@ private class MarkdownBlock
 
 	# Converts the tree of Markdown elements under `self` into `Markup`.
 	def build : Markup
-		result = @type
+		result = @type.markup
 		children.each do |child|
 			built = child.build
 			result.children << built
@@ -185,5 +202,47 @@ private class MarkdownBlock
 		io << "MarkdownBlock{"
 		io << type
 		io << "}"
+	end
+end
+
+private abstract class BlockType
+	abstract def markup : Markup
+end
+
+private class MarkdownParagraph < BlockType
+	def markup : Paragraph
+		Paragraph.new
+	end
+end
+
+private class MarkdownHeading < BlockType
+	def markup : Markup
+		Bold.new  # TODO: Change to heading
+	end
+end
+
+private class MarkdownFence < BlockType
+	getter type : Char
+	getter length : Int32
+	getter indent : Int32
+	getter info_string : String
+
+	def initialize(@length, @type, @indent, @info_string)
+	end
+
+	def markup : Markup
+		Preformatted.new("")
+	end
+
+	def ends?(start : MarkdownFence)
+		@indent == start.indent &&
+		@type == start.type &&
+		@length >= start.length
+	end
+end
+
+private class MarkdownFencedCodeBlock < MarkdownBlock
+	def build : Preformatted
+		Preformatted.new content.join("\n")
 	end
 end

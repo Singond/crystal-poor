@@ -139,6 +139,64 @@ describe Markdown do
 			doc.children[9].text.should start_with "Mauris erat arcu, vehicula"
 		end
 	end
+
+	it "can parse fenced code block" do
+		doc = parse(<<-MARKDOWN)
+		```
+		def to_html
+			String.build do |io|
+				to_html io
+			end
+		end
+		```
+		MARKDOWN
+		doc.children[0].should be_a Preformatted
+		doc.children[0].text.should eq <<-EXPECTED
+		def to_html
+			String.build do |io|
+				to_html io
+			end
+		end
+		EXPECTED
+	end
+
+	context "with a fenced code block" do
+		before_each do
+			doc = parse(<<-MARKDOWN)
+			Morbi ornare suscipit mi, nec fringilla nisi mollis et.
+			Donec suscipit aliquet metus, eget aliquam mauris porta ac.
+			```
+			def to_html
+				String.build do |io|
+					to_html io
+				end
+			end
+			```
+			Nullam imperdiet magna ac mattis semper.
+			MARKDOWN
+		end
+
+		it "ends previous paragraph" do
+			doc.children[0].should be_a Paragraph
+			doc.children[0].text.should end_with "porta ac."
+		end
+
+		it "parses the code block" do
+			doc.children[1].should be_a Preformatted
+			doc.children[1].text.should eq <<-EXPECTED
+			def to_html
+				String.build do |io|
+					to_html io
+				end
+			end
+			EXPECTED
+		end
+
+		it "starts paragraph afterward" do
+			doc.children[2].should be_a Paragraph
+			doc.children[2].text.should start_with "Nullam imperdiet"
+		end
+	end
 end
 
 describe "Markdown.setext_underline?" do
