@@ -2,6 +2,7 @@ require "./spec_helper"
 require "../src/markdown"
 
 include Poor
+include Poor::Markdown
 
 def parse(str : String) : Markup
 	b = Builder.new
@@ -137,5 +138,23 @@ describe Markdown do
 			doc.children[9].should be_a Paragraph
 			doc.children[9].text.should start_with "Mauris erat arcu, vehicula"
 		end
+	end
+end
+
+describe "Markdown.setext_underline?" do
+	it "recognizes level 1 heading" do
+		Markdown.setext_underline?("============").should eq 1_i8
+	end
+	it "recognizes level 2 heading" do
+		Markdown.setext_underline?("------------").should eq 2_i8
+	end
+	it "allows 0 to 3 spaces at beginning" do
+		Markdown.setext_underline?(" -----------").should eq 2_i8
+		Markdown.setext_underline?("  ----------").should eq 2_i8
+		Markdown.setext_underline?("   ---------").should eq 2_i8
+	end
+	it "does not allow more than 3 spaces at beginning" do
+		Markdown.setext_underline?("    --------").should be_nil
+		Markdown.setext_underline?("     -------").should be_nil
 	end
 end

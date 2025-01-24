@@ -102,33 +102,53 @@ module Poor::Markdown
 	# Determines whether *str* is a setext heading underline,
 	# that is a line, optionally indented by up to three spaces,
 	# consisting entirely of '=' or entirely of '-' characters.
-	private def self.setext_underline?(str : String) : Int8?
-		chars = str.each_char
-		spaces = 0
-		while (c = chars.next) == ' ' && spaces <= 3
-			spaces += 1
-		end
-		level = case c
-		when '=' then 1_i8
-		when '-' then 2_i8
-		else nil
-		end
-		if level && level > 0
-			while chars.next == c
-				# skip
+	def self.setext_underline?(str : String) : Int8?
+		count, type, _, rest = self.repeated_char?(str, {'=', '-'}, max_indent: 3)
+		if count > 0
+			level = case type
+			when '=' then 1_i8
+			when '-' then 2_i8
+			else 0_i8
 			end
-			if c.is_a? Char && c.whitespace?
-				# Allow whitespace after
-				while (c = chars.next).is_a? Char && c.whitespace?
-					# skip
-				end
-			end
-			# If there is nothing more, the line is an underline
-			if chars.next.is_a? Iterator::Stop
+			# Allow whitespace after
+			if level > 0 && rest.blank?
 				return level
 			end
 		end
 		nil
+	end
+
+	# Determines whether *str* starts with a repetition of a single character
+	# from *chars*, optionally preceded by spaces.
+	#
+	# The first character in the repetition can be any of the given *chars*,
+	# but all the other characters must be the same as the first one.
+	# Maximum number of spaces allowed at the beginning of the string
+	# can be changed by the `max_indent` argument. The default is 0.
+	#
+	# Returns a tuple containing the number of repetitions of the character,
+	# the character itself, the number of spaces at the beginning
+	# and the remaining part of *str* after the repetition.
+	private def self.repeated_char?(str : String, characters, max_indent = 0)
+		chars = str.each_char
+
+		# Skip indent
+		indent = 0
+		while (c = chars.next) == ' ' && indent < max_indent
+			indent += 1
+		end
+
+		# Count the repeated characters
+		count = 1
+		if c.in? characters
+			while chars.next == c
+				count += 1
+			end
+		else
+			c = nil
+		end
+
+		{count, c, indent, str[indent+count..]}
 	end
 
 	private def self.parse_inline(line : String)
