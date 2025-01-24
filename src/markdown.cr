@@ -22,6 +22,8 @@ module Poor::Markdown
 		lineno = 0
 		io.each_line do |line|
 			Log.debug { "At line #{lineno += 1}: '#{line}'" }
+
+			# Check if parents continue into this line
 			parents_iter = parents.each_with_index
 			closing = nil
 			until (elem = parents_iter.next).is_a?(Iterator::Stop) || closing
@@ -35,18 +37,22 @@ module Poor::Markdown
 				end
 			end
 
+			# Close parents which do not continue into this line
 			closing.try do |idx|
 				last = nil
 				(parents.size - idx).times do
 					last = parents.pop
 				end
 				if parents.empty? && last
+					# This was a top-level block: yield it now
 					yield last
 				end
 			end
 
+			# If there is no more text, go to next line
 			next if line.nil? || line.empty?
 
+			# See if the line starts a new block and add it
 			new_block = starts_block?(line)
 			insert_line = new_block.nil?
 			if new_block.nil? && parents.empty?
@@ -54,16 +60,18 @@ module Poor::Markdown
 				insert_line = true
 			end
 			if new_block
-				Log.debug { "Line starts #{new_block.type}" }
+				Log.debug { "Line starts #{new_block}" }
 				parents.last?.try { |last| last.children << new_block }
 				parents.push new_block
 			end
 
+			# Insert the line into the deepest parent
 			if insert_line
 				Log.debug { "Pushing line to #{parents.last}" }
 				parents.last.content << line
 			end
 		end
+		# Yield the last block
 		unless parents.empty?
 			yield parents.first
 		end
@@ -79,10 +87,6 @@ module Poor::Markdown
 			elsif starts_block?(line)
 				return {false, line}
 			end
-			# TODO: Remove 0-3 starting whitespace
-			# chars.skip_while { |c, i| c == ' ' && i <=3 }
-			# if (c = chars.next) == '=' || c == '-'
-			# 	chars.skip_while { |more| more == c }
 			unless line.empty?
 				return {true, line}
 			end
