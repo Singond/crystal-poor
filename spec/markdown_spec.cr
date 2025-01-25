@@ -86,6 +86,13 @@ describe Markdown do
 		end
 	end
 
+	it "allows empty ATX headings" do
+		doc = parse(<<-MARKDOWN)
+		##
+		MARKDOWN
+		doc.children[0].should be_a Bold
+	end
+
 	context "with setext-style headings" do
 		before_each do
 			doc = parse(<<-MARKDOWN)

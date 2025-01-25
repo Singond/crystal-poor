@@ -82,7 +82,7 @@ module Poor::Markdown
 		when MarkdownParagraph
 			if level = setext_underline?(line)
 				Log.debug { "Line is a setext underline, changing block type" }
-				block.type = MarkdownHeading.new
+				block.type = MarkdownHeading.new(level)
 				return {false, nil}
 			elsif starts_block?(line)
 				return {false, line}
@@ -100,15 +100,26 @@ module Poor::Markdown
 	end
 
 	private def self.starts_block?(line : String) : MarkdownBlock?
-		if line.starts_with?('#')
-			count = line.each_char.take_while{ |c| c == '#' }.size
-			if line.char_at(count) == ' '
-				block = MarkdownBlock.new(MarkdownHeading.new)
-				block.content << line[count+1..]
-				return block
-			end
+		if heading = atx_heading?(line)
+			return MarkdownBlock.new(heading)
 		elsif fence = code_fence?(line)
 			return MarkdownFencedCodeBlock.new(fence)
+		end
+	end
+
+	# Determines whether *line* is an ATX heading.
+	# An ATX heading starts with one or more `#` characters
+	# and its level is determined by their number.
+	# The content of the heading, if present, must be separated by one
+	# space from the marker prefix.
+	def self.atx_heading?(line : String) : MarkdownHeading?
+		level = line.each_char.take_while{ |c| c == '#' }.size
+		if level > 0
+			if line[level]? == ' '
+				MarkdownHeading.new(level, line[level+1..]? || "")
+			else
+				MarkdownHeading.new(level)
+			end
 		end
 	end
 
@@ -216,8 +227,14 @@ private class MarkdownParagraph < BlockType
 end
 
 private class MarkdownHeading < BlockType
+	property level : Int32
+	property content : String
+
+	def initialize(@level, @content = "")
+	end
+
 	def markup : Markup
-		Bold.new  # TODO: Change to heading
+		Bold.new(content)  # TODO: Change to heading
 	end
 end
 
