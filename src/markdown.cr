@@ -210,7 +210,7 @@ private class MarkdownBlock
 	end
 
 	def to_s(io : IO)
-		io << "MarkdownBlock{"
+		io << "Block{"
 		io << type
 		io << "}"
 	end
@@ -218,6 +218,10 @@ end
 
 private abstract class BlockType
 	abstract def markup : Markup
+
+	def to_s(io : IO)
+		io << self.class.name[8..]
+	end
 end
 
 private class MarkdownParagraph < BlockType
