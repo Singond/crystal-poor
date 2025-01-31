@@ -1,6 +1,7 @@
 require "log"
 require "./builder"
 require "./markup"
+require "./utils"
 
 # Basic Markdown parser.
 module Poor::Markdown
@@ -58,6 +59,10 @@ module Poor::Markdown
 			if new_block.nil? && parents.empty?
 				new_block = MarkdownBlock.new(MarkdownParagraph.new)
 				insert_line = true
+			elsif new_block && (type = new_block.type).is_a? MarkdownListItem
+				unless (p = parents.last?) && p.type.is_a? MarkdownList
+					parents.push MarkdownBlock.new(MarkdownList.new(type))
+				end
 			end
 			if new_block
 				Log.debug { "Line starts #{new_block}" }
@@ -95,6 +100,13 @@ module Poor::Markdown
 				return {false, nil}
 			end
 			return {true, line}
+		when MarkdownList
+			return {true, line}
+		when MarkdownListItem
+			if line.try &.starts_with_spaces?(type.total_width)
+				return {true, line[type.total_width..]?}
+			end
+			return {false, line}
 		end
 		{false, line}
 	end
@@ -104,6 +116,12 @@ module Poor::Markdown
 			return MarkdownBlock.new(heading)
 		elsif fence = code_fence?(line)
 			return MarkdownFencedCodeBlock.new(fence)
+		elsif item = unordered_list_item?(line)
+			block = MarkdownBlock.new(item)
+			line[item.total_width..]?.try do |l|
+				block.content << l
+			end
+			return block
 		end
 	end
 
@@ -148,6 +166,24 @@ module Poor::Markdown
 		if length >= 3
 			MarkdownFence.new(length, type, indent, infostr)
 		end
+	end
+
+	def self.unordered_list_item?(line : String) : MarkdownListItem?
+		chars = line.each_char
+		indent = 0
+		while (c = chars.next) == ' ' && indent < 3
+			indent += 1
+		end
+		if c == '-' || c == '+' || c == '*'
+			c = c.as Char
+		else
+			return nil
+		end
+		spaces = 0
+		while chars.next == ' ' && spaces < 4
+			spaces += 1
+		end
+		MarkdownListItem.new(c, indent, indent + spaces + 1)
 	end
 
 	# Determines whether *str* starts with a repetition of a single character
@@ -265,5 +301,39 @@ end
 private class MarkdownFencedCodeBlock < MarkdownBlock
 	def build : Preformatted
 		Preformatted.new content.join("\n")
+	end
+end
+
+private class MarkdownList < BlockType
+	property type : Char
+
+	def initialize(@type)
+	end
+
+	def initialize(item : MarkdownListItem)
+		initialize(item.type)
+	end
+
+	def markup : Markup
+		if type == '-' || type == '+' || type == '*'
+			UnorderedList.new([] of Markup)
+		elsif type == '.' || type == ')'
+			OrderedList.new([] of Markup)
+		else
+			raise "Wrong list type: '#{type}'"
+		end
+	end
+end
+
+private class MarkdownListItem < BlockType
+	property type : Char
+	property indent : Int32
+	property total_width : Int32
+
+	def initialize(@type, @indent, @total_width)
+	end
+
+	def markup : Markup
+		Item.new
 	end
 end

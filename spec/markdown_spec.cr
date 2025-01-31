@@ -147,6 +147,25 @@ describe Markdown do
 		end
 	end
 
+	it "can parse simple unnumbered list" do
+		doc = parse(<<-MARKDOWN)
+		- Mauris erat arcu.
+		  Ut elementum malesuada ante.
+		- Vehicula nec magna vel
+		- Tincidunt maximus nisl
+		MARKDOWN
+		list = doc.children[0]
+		list.should be_a UnorderedList
+		list.children.size.should eq 3
+		list.children[0].should be_a Item
+		list.children[0].text.should start_with "Mauris erat arcu."
+		list.children[0].text.should end_with "malesuada ante."
+		list.children[1].should be_a Item
+		list.children[1].text.should eq "Vehicula nec magna vel"
+		list.children[2].should be_a Item
+		list.children[2].text.should eq "Tincidunt maximus nisl"
+	end
+
 	it "can parse fenced code block" do
 		doc = parse(<<-MARKDOWN)
 		```
