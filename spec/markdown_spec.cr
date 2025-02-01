@@ -166,6 +166,40 @@ describe Markdown do
 		list.children[2].text.should eq "Tincidunt maximus nisl"
 	end
 
+	pending "separates unnumbered list from surrounding paragraphs" do
+		doc = parse(<<-MARKDOWN)
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+		Quisque convallis pretium fringilla.
+		- Mauris erat arcu.
+		  Ut elementum malesuada ante.
+		- Vehicula nec magna vel
+		- Tincidunt maximus nisl
+		Phasellus sed arcu ut ex tincidunt vehicula.
+		Praesent vel aliquet felis.
+		MARKDOWN
+
+		p doc
+		doc.children.size.should eq 3
+		doc.children[0].should be_a Paragraph
+		doc.children[0].text.should start_with "Lorem ipsum"
+		doc.children[0].text.should end_with "pretium fringilla."
+
+		list = doc.children[1]
+		list.should be_a UnorderedList
+		list.children.size.should eq 3
+		list.children[0].should be_a Item
+		list.children[0].text.should start_with "Mauris erat arcu."
+		list.children[0].text.should end_with "malesuada ante."
+		list.children[1].should be_a Item
+		list.children[1].text.should eq "Vehicula nec magna vel"
+		list.children[2].should be_a Item
+		list.children[2].text.should eq "Tincidunt maximus nisl"
+
+		doc.children[2].should be_a Paragraph
+		doc.children[2].text.should start_with "Phasellus sed arcu"
+		doc.children[2].text.should end_with "aliquet felis."
+	end
+
 	it "can parse fenced code block" do
 		doc = parse(<<-MARKDOWN)
 		```
