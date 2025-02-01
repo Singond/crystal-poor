@@ -19,6 +19,16 @@ module Poor::Markdown
 	# Parses the content of *io* and yields each top-level block
 	# as `Markup`.
 	def self.each_top_level_block(io : IO)
+		self.each_block(io) do |block, parents|
+			if parents.empty? && block
+				yield block
+			end
+		end
+	end
+
+	# Parses the content of *io* and yields each block as `Markup`
+	# as it is closed, together with its parents.
+	private def self.each_block(io : IO)
 		parents = Deque(MarkdownBlock).new
 		lineno = 0
 		io.each_line do |line|
@@ -40,13 +50,8 @@ module Poor::Markdown
 
 			# Close parents which do not continue into this line
 			closing.try do |idx|
-				last = nil
 				(parents.size - idx).times do
-					last = parents.pop
-				end
-				if parents.empty? && last
-					# This was a top-level block: yield it now
-					yield last
+					yield parents.pop, parents
 				end
 			end
 
@@ -79,7 +84,7 @@ module Poor::Markdown
 		end
 		# Yield the last block
 		unless parents.empty?
-			yield parents.first
+			yield parents.first, [] of MarkdownBlock
 		end
 	end
 
