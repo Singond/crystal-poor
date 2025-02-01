@@ -69,6 +69,7 @@ module Poor::Markdown
 				parents.last?.try { |last| last.children << new_block }
 				parents.push new_block
 			end
+			Log.trace { "Parent blocks: #{self.parents_to_s(parents)}" }
 
 			# Insert the line into the deepest parent
 			if insert_line
@@ -221,6 +222,10 @@ module Poor::Markdown
 
 	private def self.parse_inline(line : String)
 	end
+
+	private def self.parents_to_s(parents : Deque(MarkdownBlock))
+		parents.join " > "
+	end
 end
 
 # A block element in a Markdown document.
@@ -246,9 +251,7 @@ private class MarkdownBlock
 	end
 
 	def to_s(io : IO)
-		io << "Block{"
 		io << type
-		io << "}"
 	end
 end
 
