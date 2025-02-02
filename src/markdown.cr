@@ -60,17 +60,27 @@ module Poor::Markdown
 
 			# See if the line starts a new block and add it
 			new_block = starts_block?(line)
+			if new_block
+				Log.debug { "Line starts #{new_block}" }
+			end
 			insert_line = new_block.nil?
-			if new_block.nil? && parents.empty?
-				new_block = MarkdownBlock.new(MarkdownParagraph.new)
-				insert_line = true
-			elsif new_block && (type = new_block.type).is_a? MarkdownListItem
+			if (p = parents.last?) && p.type.is_a? MarkdownList && !(new_block.try &.type.is_a? MarkdownListItem)
+				Log.debug { "Closing parent list, because new block is not a list item" }
+				yield parents.pop, parents
+			end
+			if new_block.nil?
+				if parents.empty?
+					Log.debug { "Starting paragraph, because parent is not a paragraph" }
+					new_block = MarkdownBlock.new(MarkdownParagraph.new)
+					insert_line = true
+				end
+			elsif (type = new_block.type).is_a? MarkdownListItem
 				unless (p = parents.last?) && p.type.is_a? MarkdownList
+					Log.debug { "Inserting list, because new block is a list item" }
 					parents.push MarkdownBlock.new(MarkdownList.new(type))
 				end
 			end
 			if new_block
-				Log.debug { "Line starts #{new_block}" }
 				parents.last?.try { |last| last.children << new_block }
 				parents.push new_block
 			end

@@ -166,7 +166,7 @@ describe Markdown do
 		list.children[2].text.should eq "Tincidunt maximus nisl"
 	end
 
-	pending "separates unnumbered list from surrounding paragraphs" do
+	it "separates unnumbered list from surrounding paragraphs" do
 		doc = parse(<<-MARKDOWN)
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 		Quisque convallis pretium fringilla.
