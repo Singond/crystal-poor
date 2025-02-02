@@ -241,117 +241,117 @@ module Poor::Markdown
 	private def self.parents_to_s(parents : Deque(MarkdownBlock))
 		parents.join " > "
 	end
-end
 
-# A block element in a Markdown document.
-private class MarkdownBlock
-	property type : BlockType
-	property children : Array(MarkdownBlock) = [] of MarkdownBlock
-	property content : Array(String) = [] of String
+	# A block element in a Markdown document.
+	private class MarkdownBlock
+		property type : BlockType
+		property children : Array(MarkdownBlock) = [] of MarkdownBlock
+		property content : Array(String) = [] of String
 
-	def initialize(@type)
-	end
-
-	# Converts the tree of Markdown elements under `self` into `Markup`.
-	def build : Markup
-		result = @type.markup
-		children.each do |child|
-			built = child.build
-			result.children << built
+		def initialize(@type)
 		end
-		unless content.empty?
-			result.children << PlainText.new(content.join(" "))
+
+		# Converts the tree of Markdown elements under `self` into `Markup`.
+		def build : Markup
+			result = @type.markup
+			children.each do |child|
+				built = child.build
+				result.children << built
+			end
+			unless content.empty?
+				result.children << PlainText.new(content.join(" "))
+			end
+			result
 		end
-		result
-	end
 
-	def to_s(io : IO)
-		io << type
-	end
-end
-
-private abstract class BlockType
-	abstract def markup : Markup
-
-	def to_s(io : IO)
-		io << self.class.name[8..]
-	end
-end
-
-private class MarkdownParagraph < BlockType
-	def markup : Paragraph
-		Paragraph.new
-	end
-end
-
-private class MarkdownHeading < BlockType
-	property level : Int32
-	property content : String
-
-	def initialize(@level, @content = "")
-	end
-
-	def markup : Markup
-		Bold.new(content)  # TODO: Change to heading
-	end
-end
-
-private class MarkdownFence < BlockType
-	getter type : Char
-	getter length : Int32
-	getter indent : Int32
-	getter info_string : String
-
-	def initialize(@length, @type, @indent, @info_string)
-	end
-
-	def markup : Markup
-		Preformatted.new("")
-	end
-
-	def ends?(start : MarkdownFence)
-		@indent == start.indent &&
-		@type == start.type &&
-		@length >= start.length
-	end
-end
-
-private class MarkdownFencedCodeBlock < MarkdownBlock
-	def build : Preformatted
-		Preformatted.new content.join("\n")
-	end
-end
-
-private class MarkdownList < BlockType
-	property type : Char
-
-	def initialize(@type)
-	end
-
-	def initialize(item : MarkdownListItem)
-		initialize(item.type)
-	end
-
-	def markup : Markup
-		if type == '-' || type == '+' || type == '*'
-			UnorderedList.new([] of Markup)
-		elsif type == '.' || type == ')'
-			OrderedList.new([] of Markup)
-		else
-			raise "Wrong list type: '#{type}'"
+		def to_s(io : IO)
+			io << type
 		end
 	end
-end
 
-private class MarkdownListItem < BlockType
-	property type : Char
-	property indent : Int32
-	property total_width : Int32
+	private abstract class BlockType
+		abstract def markup : Markup
 
-	def initialize(@type, @indent, @total_width)
+		def to_s(io : IO)
+			io << self.class.name[8..]
+		end
 	end
 
-	def markup : Markup
-		Item.new
+	private class MarkdownParagraph < BlockType
+		def markup : Paragraph
+			Paragraph.new
+		end
+	end
+
+	private class MarkdownHeading < BlockType
+		property level : Int32
+		property content : String
+
+		def initialize(@level, @content = "")
+		end
+
+		def markup : Markup
+			Bold.new(content)  # TODO: Change to heading
+		end
+	end
+
+	private class MarkdownFence < BlockType
+		getter type : Char
+		getter length : Int32
+		getter indent : Int32
+		getter info_string : String
+
+		def initialize(@length, @type, @indent, @info_string)
+		end
+
+		def markup : Markup
+			Preformatted.new("")
+		end
+
+		def ends?(start : MarkdownFence)
+			@indent == start.indent &&
+			@type == start.type &&
+			@length >= start.length
+		end
+	end
+
+	private class MarkdownFencedCodeBlock < MarkdownBlock
+		def build : Preformatted
+			Preformatted.new content.join("\n")
+		end
+	end
+
+	private class MarkdownList < BlockType
+		property type : Char
+
+		def initialize(@type)
+		end
+
+		def initialize(item : MarkdownListItem)
+			initialize(item.type)
+		end
+
+		def markup : Markup
+			if type == '-' || type == '+' || type == '*'
+				UnorderedList.new([] of Markup)
+			elsif type == '.' || type == ')'
+				OrderedList.new([] of Markup)
+			else
+				raise "Wrong list type: '#{type}'"
+			end
+		end
+	end
+
+	private class MarkdownListItem < BlockType
+		property type : Char
+		property indent : Int32
+		property total_width : Int32
+
+		def initialize(@type, @indent, @total_width)
+		end
+
+		def markup : Markup
+			Item.new
+		end
 	end
 end
