@@ -178,7 +178,6 @@ describe Markdown do
 		Praesent vel aliquet felis.
 		MARKDOWN
 
-		p doc
 		doc.children.size.should eq 3
 		doc.children[0].should be_a Paragraph
 		doc.children[0].text.should start_with "Lorem ipsum"
