@@ -202,6 +202,15 @@ module Poor::Markdown
 		MarkdownListItem.new(c, indent, indent + spaces + 1)
 	end
 
+	protected def self.parse_inline(lines)
+		parser = InlineParser.new
+		first = true
+		unless lines.empty?
+			parser.parse(lines)
+			yield parser.get
+		end
+	end
+
 	# Determines whether *str* starts with a repetition of a single character
 	# from *chars*, optionally preceded by spaces.
 	#
@@ -235,9 +244,6 @@ module Poor::Markdown
 		{count, c, indent, str[indent+count..]? || ""}
 	end
 
-	private def self.parse_inline(line : String)
-	end
-
 	private def self.parents_to_s(parents : Deque(MarkdownBlock))
 		parents.join " > "
 	end
@@ -258,8 +264,8 @@ module Poor::Markdown
 				built = child.build
 				result.children << built
 			end
-			unless content.empty?
-				result.children << PlainText.new(content.join(" "))
+			Markdown.parse_inline(content) do |markup|
+				result.children << markup
 			end
 			result
 		end
@@ -352,6 +358,63 @@ module Poor::Markdown
 
 		def markup : Markup
 			Item.new
+		end
+	end
+
+	class InlineParser
+		@counter = 0
+		@builder : Poor::Builder
+		@code = 0
+
+		def initialize
+			@builder = Poor::Builder.new
+			@builder.start Base.new
+		end
+
+		def parse(io : IO)
+			builder = @builder
+
+			token : Poor::Markup?
+			close = false
+			str_builder = String::Builder.new
+			io.each_char do |c|
+				close = false
+				token = nil
+				if c == '*' || c == '_'
+					if builder.parent.is_a? Italic
+						close = true
+					else
+						token = Italic.new
+					end
+				else
+					str_builder << c
+				end
+				if token || close
+					builder.add PlainText.new(str_builder.to_s)
+					str_builder = String::Builder.new
+				end
+				if token
+					builder.start token
+				elsif close
+					builder.finish
+				end
+			end
+			builder.add PlainText.new(str_builder.to_s)
+		end
+
+		def parse(str : String)
+			parse(IO::Memory.new(str))
+		end
+
+		def parse(strings : Enumerable(String))
+			strings.each_with_index do |s, idx|
+				@builder.add PlainText.new(" ") if idx > 0
+				parse(s)
+			end
+		end
+
+		def get
+			@builder.get
 		end
 	end
 end

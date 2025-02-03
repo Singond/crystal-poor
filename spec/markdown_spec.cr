@@ -275,3 +275,29 @@ describe "Markdown.setext_underline?" do
 		Markdown.setext_underline?("     -------").should be_nil
 	end
 end
+
+def parse_inline(str) : Markup
+	p = Markdown::InlineParser.new
+	p.parse(str)
+	p.get
+end
+
+describe "InlineParser" do
+	it "Treats blank line as" do
+		par = parse_inline(<<-MARKDOWN.each_line)
+		Lorem ipsum dolor sit amet,
+		consectetur adipiscing elit.
+		MARKDOWN
+		par.text.should eq "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+	end
+
+	it "parses line with italics" do
+		line = parse_inline("Lorem ipsum _dolor_ sit amet")
+		line.children[0].should be_a PlainText
+		line.children[0].text.should eq "Lorem ipsum "
+		line.children[1].should be_a Italic
+		line.children[1].text.should eq "dolor"
+		line.children[2].should be_a PlainText
+		line.children[2].text.should eq " sit amet"
+	end
+end
