@@ -31,6 +31,10 @@ abstract class Poor::BuilderBase
 			close(@parents.pop)
 		end
 	end
+
+	def parent
+		@parents.last?
+	end
 end
 
 class Poor::Builder < Poor::BuilderBase
