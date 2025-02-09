@@ -311,6 +311,28 @@ describe InlineParser do
 		line.children[2].text.should eq " sit amet"
 	end
 
+	it "parses line with code" do
+		line = parse_inline("Lorem ipsum `dolor` sit amet")
+		line.children[0].should be_a PlainText
+		line.children[0].text.should eq "Lorem ipsum "
+		line.children[1].should be_a Code
+		line.children[1].text.should eq "dolor"
+		line.children[2].should be_a PlainText
+		line.children[2].text.should eq " sit amet"
+	end
+
+	it "handles longer backtick strings" do
+		line = parse_inline("Lorem ipsum ``dolor`` sit amet")
+		line.children[1].should be_a Code
+		line.children[1].text.should eq "dolor"
+	end
+
+	it "handles code containing backticks" do
+		line = parse_inline("Lorem ipsum `` `dolor` `` sit amet")
+		line.children[1].should be_a Code
+		line.children[1].text.should eq "`dolor`"
+	end
+
 	describe ".tokenize" do
 		it "splits input into raw text and formatting" do
 			result = [] of String

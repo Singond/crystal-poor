@@ -376,11 +376,27 @@ module Poor::Markdown
 
 			token : Poor::Markup?
 			close = false
-			str_builder = String::Builder.new
+			str_builder = nil
 			parents = Deque(String).new
 			InlineParser.tokenize(io) do |token|
 				element = nil
-				if token == "*" || token == "_"
+				if token.starts_with? '`'
+					if token == parents.last?
+						# Closing backtick string
+						parents.pop
+						str_builder.try do |sb|
+							builder.add Code.new(normalize_code_span(sb.to_s))
+						end
+						str_builder = nil
+					elsif parents.last?.try &.starts_with?('`') && str_builder
+						# Already inside code span
+						str_builder << token
+					else
+						# Start a new code span
+						parents.push(token.to_s)
+						str_builder = String::Builder.new
+					end
+				elsif token == "*" || token == "_"
 					if token == parents.last?
 						builder.finish
 						parents.pop
@@ -396,13 +412,15 @@ module Poor::Markdown
 						builder.start Bold.new
 						parents.push(token.to_s)
 					end
-				elsif token.is_a? Char
-					builder.add PlainText.new(token.to_s)
 				else
-					builder.add PlainText.new(token)
+					token = token.to_s if token.is_a? Char
+					if str_builder
+						str_builder << token
+					else
+						builder.add PlainText.new(token)
+					end
 				end
 			end
-			builder.add PlainText.new(str_builder.to_s)
 		end
 
 		def parse(str : String)
@@ -426,7 +444,11 @@ module Poor::Markdown
 				token = nil
 				last = nil
 				if c == '`'
-					token = c
+					count = 1
+					while (last = chars.next) == c
+						count += 1
+					end
+					token = c.to_s * count
 				elsif c == '*' || c == '_'
 					count = 1
 					while (last = chars.next) == c
@@ -458,6 +480,13 @@ module Poor::Markdown
 			tokenize(IO::Memory.new(str)) do |token|
 				yield token
 			end
+		end
+
+		def normalize_code_span(str)
+			if str[0]? == ' ' && str[-1] == ' ' && !str.blank?
+				str = str[1..-2]
+			end
+			str
 		end
 
 		def get
