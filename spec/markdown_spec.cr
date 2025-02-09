@@ -313,9 +313,17 @@ describe InlineParser do
 
 	describe ".tokenize" do
 		it "splits input into raw text and formatting" do
+			result = [] of String
 			InlineParser.tokenize("Lorem ipsum _dolor_ sit amet") do |t|
-				puts "> #{t}"
+				result << t
 			end
+			result.should eq [
+				"Lorem ipsum ",
+				"_",
+				"dolor",
+				"_",
+				" sit amet"
+			]
 		end
 	end
 end
