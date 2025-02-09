@@ -301,6 +301,16 @@ describe InlineParser do
 		line.children[2].text.should eq " sit amet"
 	end
 
+	it "parses line with bold" do
+		line = parse_inline("Lorem ipsum __dolor__ sit amet")
+		line.children[0].should be_a PlainText
+		line.children[0].text.should eq "Lorem ipsum "
+		line.children[1].should be_a Bold
+		line.children[1].text.should eq "dolor"
+		line.children[2].should be_a PlainText
+		line.children[2].text.should eq " sit amet"
+	end
+
 	describe ".tokenize" do
 		it "splits input into raw text and formatting" do
 			InlineParser.tokenize("Lorem ipsum _dolor_ sit amet") do |t|

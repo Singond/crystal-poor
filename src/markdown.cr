@@ -388,6 +388,14 @@ module Poor::Markdown
 						builder.start Italic.new
 						parents.push(token.to_s)
 					end
+				elsif token == "**" || token == "__"
+					if token == parents.last?
+						builder.finish
+						parents.pop
+					else
+						builder.start Bold.new
+						parents.push(token.to_s)
+					end
 				elsif token.is_a? Char
 					builder.add PlainText.new(token.to_s)
 				else
