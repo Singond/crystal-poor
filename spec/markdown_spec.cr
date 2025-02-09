@@ -282,8 +282,8 @@ def parse_inline(str) : Markup
 	p.get
 end
 
-describe "InlineParser" do
-	it "Treats blank line as" do
+describe InlineParser do
+	it "treats blank line as whitespace" do
 		par = parse_inline(<<-MARKDOWN.each_line)
 		Lorem ipsum dolor sit amet,
 		consectetur adipiscing elit.
@@ -299,5 +299,13 @@ describe "InlineParser" do
 		line.children[1].text.should eq "dolor"
 		line.children[2].should be_a PlainText
 		line.children[2].text.should eq " sit amet"
+	end
+
+	describe ".tokenize" do
+		it "splits input into raw text and formatting" do
+			InlineParser.tokenize("Lorem ipsum _dolor_ sit amet") do |t|
+				puts "> #{t}"
+			end
+		end
 	end
 end

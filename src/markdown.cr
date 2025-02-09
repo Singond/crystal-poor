@@ -377,26 +377,21 @@ module Poor::Markdown
 			token : Poor::Markup?
 			close = false
 			str_builder = String::Builder.new
-			io.each_char do |c|
-				close = false
-				token = nil
-				if c == '*' || c == '_'
-					if builder.parent.is_a? Italic
-						close = true
+			parents = Deque(String).new
+			InlineParser.tokenize(io) do |token|
+				element = nil
+				if token == "*" || token == "_"
+					if token == parents.last?
+						builder.finish
+						parents.pop
 					else
-						token = Italic.new
+						builder.start Italic.new
+						parents.push(token.to_s)
 					end
+				elsif token.is_a? Char
+					builder.add PlainText.new(token.to_s)
 				else
-					str_builder << c
-				end
-				if token || close
-					builder.add PlainText.new(str_builder.to_s)
-					str_builder = String::Builder.new
-				end
-				if token
-					builder.start token
-				elsif close
-					builder.finish
+					builder.add PlainText.new(token)
 				end
 			end
 			builder.add PlainText.new(str_builder.to_s)
@@ -410,6 +405,50 @@ module Poor::Markdown
 			strings.each_with_index do |s, idx|
 				@builder.add PlainText.new(" ") if idx > 0
 				parse(s)
+			end
+		end
+
+		# Splits *io* into tokens and yields each token to the block.
+		def self.tokenize(io : IO)
+			str = String::Builder.new
+			chars = io.each_char
+			last = nil
+
+			while (c = last || chars.next).is_a? Char
+				token = nil
+				last = nil
+				if c == '`'
+					token = c
+				elsif c == '*' || c == '_'
+					count = 1
+					while (last = chars.next) == c
+						count += 1
+					end
+					if count == 1
+						token = c.to_s      # Italic start/end
+					elsif count == 2
+						token = c.to_s * 2  # Bold start/end
+					else
+						count.times do
+							str << c
+						end
+					end
+				end
+				if token
+					yield str.to_s
+					str = String::Builder.new
+					yield token
+				else
+					str << c
+				end
+			end
+			yield str.to_s
+		end
+
+		# Splits *str* into tokens and yields each token to the block.
+		def self.tokenize(str : String)
+			tokenize(IO::Memory.new(str)) do |token|
+				yield token
 			end
 		end
 
