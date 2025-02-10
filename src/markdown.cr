@@ -265,7 +265,7 @@ module Poor::Markdown
 				result.children << built
 			end
 			Markdown.parse_inline(content) do |markup|
-				result.children << markup
+				result.children.concat markup.children
 			end
 			result
 		end
