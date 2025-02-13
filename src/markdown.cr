@@ -366,9 +366,13 @@ module Poor::Markdown
 		@builder : Poor::Builder
 		@code = 0
 
-		def initialize
-			@builder = Poor::Builder.new
-			@builder.start Base.new
+		def initialize(builder = nil)
+			if builder
+				@builder = builder
+			else
+				@builder = Poor::Builder.new
+				@builder.start Base.new
+			end
 		end
 
 		def parse(io : IO)
