@@ -4,6 +4,10 @@ module Poor::Formatter
 	@parents = Deque(Markup).new
 
 	def format(text : Markup)
+		format_internal(text)
+	end
+
+	protected def format_internal(text : Markup)
 		text.each_token do |t|
 			self << t
 		end

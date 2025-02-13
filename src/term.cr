@@ -2,6 +2,7 @@ require "colorize"
 require "string_scanner"
 require "./formatter"
 require "./markup"
+require "./whitespace_trimmed"
 
 module Poor
 	extend self
@@ -29,9 +30,8 @@ module Poor
 	class TerminalFormatter
 		include Formatter
 		@style : TerminalStyle
-		@io : IO
-		@pending_whitespace = ""
-		@whitespace_written = false
+		@io_plain : IO
+		@io : WhitespaceTrimmed
 		@bold = 0
 		@italic = 0
 		@dim = 0
@@ -43,19 +43,26 @@ module Poor
 		@lw : LineWrapper
 		@root : Markup?
 
-		def initialize(@style, @io = STDOUT)
+		def initialize(@style, io = STDOUT)
+			@io_plain = io
+			@io = WhitespaceTrimmed.new(io)
 			@lw = LineWrapper.new(@io, @style.line_width, @style.justify)
 			indent(@style.left_margin)
 			@lw.right_skip = @style.right_margin
+		end
+
+		def format(text : Markup, trailing_newline = true)
+			format_internal(text)
+			if trailing_newline
+				@io_plain << '\n'
+			end
 		end
 
 		def open_element(element : Markup)
 			if @root.nil?
 				@root = element
 			end
-			@whitespace_written = false
 			open(element)
-			@pending_whitespace = "" if @whitespace_written
 		end
 
 		def close_element(element : Markup)
@@ -138,8 +145,6 @@ module Poor
 			if @dim > 0
 				c = c.dim
 			end
-			@io << @pending_whitespace
-			@whitespace_written = true
 			c.surround(@lw) do
 				@lw << "\e[3m" if @italic > 0
 				s = StringScanner.new(e.text)
@@ -197,19 +202,15 @@ module Poor
 		private def open(e : Paragraph)
 			unless @lw.empty?
 				@lw.flush
-				@pending_whitespace = "\n"
+				@io << '\n'
 			end
 			return if e.text.empty?
 			indent_one(@style.paragraph_indent)
-			if @pending_whitespace.ends_with? "\n"
-				@io << @pending_whitespace
-				@whitespace_written = true
-			end
 		end
 
 		private def close(e : Paragraph)
 			@lw.flush unless @lw.empty?
-			@pending_whitespace = "\n" unless e.text.empty?
+			@io << '\n' unless e.text.empty?
 		end
 
 		private def open(e : OrderedList)
@@ -259,11 +260,7 @@ module Poor
 		private def open(e : LabeledParagraph)
 			unless @lw.empty?
 				@lw.flush
-				@pending_whitespace = "\n"
-			end
-			if @pending_whitespace.ends_with? "\n"
-				@io << @pending_whitespace
-				@whitespace_written = true
+				@io << '\n'
 			end
 			indent(e.indent)
 			dedent_label(e.label, align: Alignment::Left)
@@ -271,7 +268,7 @@ module Poor
 
 		private def close(e : LabeledParagraph)
 			@lw.flush unless @lw.empty?
-			@pending_whitespace = "\n"
+			@io << '\n'
 			dedent
 		end
 
