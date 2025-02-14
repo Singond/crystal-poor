@@ -40,6 +40,7 @@ module Poor
 		@numbering = Deque(Int32).new
 		@in_ordered_list = false
 		@indentation = Deque(Int32).new
+		@skip_paragraph_separation = true
 		@lw : LineWrapper
 		@root : Markup?
 
@@ -204,6 +205,10 @@ module Poor
 				@lw.flush
 				@io << '\n'
 			end
+			unless @skip_paragraph_separation
+				@io.ensure_ends_with "\n\n"
+			end
+			@skip_paragraph_separation = false
 			return if e.text.empty?
 			indent_one(@style.paragraph_indent)
 		end

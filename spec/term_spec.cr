@@ -541,7 +541,7 @@ describe UnorderedList do
 			EXPECTED
 			#---------------------------------- 80 chars ----------------------------------#
 	end
-	pending "works if list is not inside paragraph with surrounding text" do
+	it "is separated from surrounding paragraphs" do
 		m = markup(
 			paragraph("Donec sit amet facilisis lectus."),
 			unordered_list(
@@ -551,12 +551,14 @@ describe UnorderedList do
 			paragraph("Proin elementum risus ut leo porttitor tristique.")
 		)
 		formatted = format_to_s m, wrap_80
-		puts formatted
 		formatted.should eq <<-EXPECTED
 			Donec sit amet facilisis lectus.
+
 			  * Curabitur pulvinar purus imperdiet.
 			  * Sed rutrum pulvinar sapien eget feugiat.
+
 			Proin elementum risus ut leo porttitor tristique.
+
 			EXPECTED
 	end
 end
