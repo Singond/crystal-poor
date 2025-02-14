@@ -2,7 +2,7 @@ require "colorize"
 require "string_scanner"
 require "./formatter"
 require "./markup"
-require "./whitespace_trimmed"
+require "./whitespace_handler"
 
 module Poor
 	extend self
@@ -31,7 +31,7 @@ module Poor
 		include Formatter
 		@style : TerminalStyle
 		@io_plain : IO
-		@io : WhitespaceTrimmed
+		@io : WhitespaceHandler
 		@bold = 0
 		@italic = 0
 		@dim = 0
@@ -45,7 +45,7 @@ module Poor
 
 		def initialize(@style, io = STDOUT)
 			@io_plain = io
-			@io = WhitespaceTrimmed.new(io)
+			@io = WhitespaceHandler.new(io)
 			@lw = LineWrapper.new(@io, @style.line_width, @style.justify)
 			indent(@style.left_margin)
 			@lw.right_skip = @style.right_margin
