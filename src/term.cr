@@ -288,12 +288,12 @@ module Poor
 			@style.code_style.surround(@io) do
 				e.text.each_line do |line|
 					left_skip.times do
-						@io << " "
+						@io << ' '
 					end
-					@io << line << "\n"
+					@io << line << '\n'
 				end
 			end
-			@io << "\n"
+			@io << '\n'
 		end
 
 		private def open(e)
