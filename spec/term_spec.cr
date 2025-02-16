@@ -673,4 +673,35 @@ describe Preformatted do
 			EXPECTED
 			#------------------------ 60 chars ------------------------#
 	end
+
+	it "is separated from surrounding paragraphs by blank lines" do
+		m = markup(
+			paragraph(
+				"Nascetur neque suspendisse, ante in aliquet suspendisse. ",
+				"Vivamus curabitur semper fames etiam maecenas lectus."),
+			preformatted(<<-PRE),
+				public static void main (String... args) {
+				    System.out.prinln("Hello, world!");
+				}
+				PRE
+			paragraph(
+				"Magna feugiat in dui morbi nulla etiam duis donec quis. ",
+				"Nulla dolor dapibus sit aliquam hac ex vehicula torquent.")
+		)
+		style = wrap_60
+		style.code_style = Colorize.with
+		formatted = format_to_s m, style
+		formatted.should eq <<-EXPECTED
+			Nascetur neque suspendisse, ante in aliquet suspendisse.
+			Vivamus curabitur semper fames etiam maecenas lectus.
+
+			    public static void main (String... args) {
+			        System.out.prinln("Hello, world!");
+			    }
+
+			Magna feugiat in dui morbi nulla etiam duis donec quis.
+			Nulla dolor dapibus sit aliquam hac ex vehicula torquent.
+
+			EXPECTED
+	end
 end

@@ -283,7 +283,7 @@ module Poor
 
 		private def open(e : Preformatted)
 			@lw.flush unless @lw.empty?
-			@io << "\n"
+			@io.ensure_ends_with "\n\n"
 			left_skip = @indentation.sum + @style.preformatted_indent
 			@style.code_style.surround(@io) do
 				e.text.each_line do |line|
