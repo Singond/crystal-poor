@@ -244,7 +244,7 @@ describe Paragraph do
 		end
 	end
 	context "when line length is not set" do
-		pending "is separated from surrounding text by blank lines" do
+		it "is separated from surrounding text by blank lines" do
 			style = TerminalStyle.new()
 			m = markup("Line outside paragraph.",
 				paragraph(<<-PAR),

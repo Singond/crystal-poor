@@ -130,6 +130,7 @@ module Poor
 			else
 				# Printing on separate line: ignore the separator
 				@io << label << "\n"
+				@skip_paragraph_separation = true
 			end
 		end
 
@@ -166,6 +167,7 @@ module Poor
 				end
 				@lw << "\e[0m" if @italic > 0
 			end
+			@skip_paragraph_separation = false
 		end
 
 		private def open(e : Bold)
@@ -215,7 +217,9 @@ module Poor
 
 		private def close(e : Paragraph)
 			@lw.flush unless @lw.empty?
-			@io << '\n' unless e.text.empty?
+			unless e.text.empty?
+				@io.ensure_ends_with "\n\n"
+			end
 		end
 
 		private def open(e : OrderedList)
