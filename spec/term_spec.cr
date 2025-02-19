@@ -690,8 +690,7 @@ describe Preformatted do
 		)
 		style = wrap_60
 		style.code_style = Colorize.with
-		formatted = format_to_s m, style
-		formatted.should eq <<-EXPECTED
+		format_to_s(m, style).should eq <<-EXPECTED
 			Nascetur neque suspendisse, ante in aliquet suspendisse.
 			Vivamus curabitur semper fames etiam maecenas lectus.
 
@@ -703,5 +702,14 @@ describe Preformatted do
 			Nulla dolor dapibus sit aliquam hac ex vehicula torquent.
 
 			EXPECTED
+		# Using terminal colors may cause additional problems:
+		colorized = format_to_s(m, wrap_60)
+		lines = colorized.each_line.to_a
+		lines[1].should end_with "maecenas lectus."
+		lines[2].should be_empty
+		lines[3].should_not be_empty, "Too many blank lines before if colored"
+		lines[5].strip.should start_with "}"
+		lines[6].should be_empty
+		lines[7].should_not be_empty, "Too many blank lines after if colored"
 	end
 end

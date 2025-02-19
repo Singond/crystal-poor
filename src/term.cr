@@ -286,14 +286,14 @@ module Poor
 			@io.ensure_ends_with "\n\n"
 			left_skip = @indentation.sum + @style.preformatted_indent
 			@style.code_style.surround(@io) do
-				e.text.each_line do |line|
+				e.text.each_line.join(@io, '\n') do |line, io|
 					left_skip.times do
-						@io << ' '
+						io << ' '
 					end
-					@io << line << '\n'
+					io << line
 				end
 			end
-			@io << '\n'
+			@io.ensure_ends_with "\n\n"
 		end
 
 		private def open(e)
