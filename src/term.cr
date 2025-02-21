@@ -1,7 +1,9 @@
 require "colorize"
+require "log"
 require "string_scanner"
 require "./formatter"
 require "./markup"
+require "./whitespace_handler"
 
 module Poor
 	extend self
@@ -29,36 +31,46 @@ module Poor
 	class TerminalFormatter
 		include Formatter
 		@style : TerminalStyle
-		@io : IO
-		@pending_whitespace = ""
-		@whitespace_written = false
+		@io_plain : IO
+		@io : WhitespaceHandler
 		@bold = 0
 		@italic = 0
 		@dim = 0
 		@code = 0
+		@upcase = 0
 		@lists = [] of OrderedList | UnorderedList
 		@numbering = Deque(Int32).new
 		@in_ordered_list = false
 		@indentation = Deque(Int32).new
+		@skip_paragraph_separation = true
 		@lw : LineWrapper
 		@root : Markup?
 
-		def initialize(@style, @io = STDOUT)
+		def initialize(@style, io = STDOUT)
+			@io_plain = io
+			@io = WhitespaceHandler.new(io)
 			@lw = LineWrapper.new(@io, @style.line_width, @style.justify)
 			indent(@style.left_margin)
 			@lw.right_skip = @style.right_margin
+		end
+
+		def format(text : Markup, trailing_newline = true)
+			format_internal(text)
+			if trailing_newline
+				@io_plain << '\n'
+			end
 		end
 
 		def open_element(element : Markup)
 			if @root.nil?
 				@root = element
 			end
-			@whitespace_written = false
+			Log.debug { "Opening #{element}" }
 			open(element)
-			@pending_whitespace = "" if @whitespace_written
 		end
 
 		def close_element(element : Markup)
+			Log.debug { "Closing #{element}" }
 			close(element)
 			if element == @root
 				@lw.flush unless @lw.empty?
@@ -70,6 +82,7 @@ module Poor
 		private def indent(amount)
 			@indentation.push amount
 			@lw.left_skip = @indentation.sum
+			@lw.next_left_skip = @indentation.sum
 		end
 
 		# Increases the default `left_skip` by *amount*
@@ -122,6 +135,19 @@ module Poor
 			else
 				# Printing on separate line: ignore the separator
 				@io << label << "\n"
+				@skip_paragraph_separation = true
+			end
+		end
+
+		private def finish_block
+			unless @lw.empty?
+				@lw.flush
+			end
+		end
+
+		private def separate_from_previous_block(separator)
+			unless @skip_paragraph_separation
+				@io.ensure_ends_with separator
 			end
 		end
 
@@ -138,8 +164,6 @@ module Poor
 			if @dim > 0
 				c = c.dim
 			end
-			@io << @pending_whitespace
-			@whitespace_written = true
 			c.surround(@lw) do
 				@lw << "\e[3m" if @italic > 0
 				s = StringScanner.new(e.text)
@@ -148,6 +172,9 @@ module Poor
 					if !word
 						word = s.rest
 						s.terminate
+					end
+					if @upcase > 0
+						word = word.upcase
 					end
 					trailing_spaces = s[0]?
 					if trailing_spaces
@@ -160,6 +187,7 @@ module Poor
 				end
 				@lw << "\e[0m" if @italic > 0
 			end
+			@skip_paragraph_separation = false
 		end
 
 		private def open(e : Bold)
@@ -195,45 +223,64 @@ module Poor
 		end
 
 		private def open(e : Paragraph)
-			unless @lw.empty?
-				@lw.flush
-				@pending_whitespace = "\n"
-			end
+			finish_block
+			separate_from_previous_block "\n\n"
+			@skip_paragraph_separation = false
 			return if e.text.empty?
 			indent_one(@style.paragraph_indent)
-			if @pending_whitespace.ends_with? "\n"
-				@io << @pending_whitespace
-				@whitespace_written = true
-			end
 		end
 
 		private def close(e : Paragraph)
 			@lw.flush unless @lw.empty?
-			@pending_whitespace = "\n" unless e.text.empty?
+			unless e.text.empty?
+				@io.ensure_ends_with "\n\n"
+			end
+		end
+
+		private def open(e : Heading)
+			finish_block
+			separate_from_previous_block "\n\n"
+			if e.level == 1
+				@upcase += 1
+				indent(-@style.left_margin)
+			elsif e.level == 2
+				indent(-@style.left_margin // 2)
+			end
+			@bold += 1
+		end
+
+		private def close(e : Heading)
+			@lw.flush unless @lw.empty?
+			@bold -= 1
+			if e.level == 1 || e.level == 2
+				dedent
+				@upcase -= 1
+			end
+			@skip_paragraph_separation = true
 		end
 
 		private def open(e : OrderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			indent(@style.list_indent)
 			@lists.push e
 			@numbering.push 0
 		end
 
 		private def close(e : OrderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@numbering.pop unless @numbering.empty?
 			@lists.pop unless @lists.empty?
 			dedent
 		end
 
 		private def open(e : UnorderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			indent(@style.list_indent)
 			@lists.push e
 		end
 
 		private def close(e : UnorderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@lists.pop unless @lists.empty?
 			dedent
 		end
@@ -253,41 +300,37 @@ module Poor
 		end
 
 		private def close(e : Item)
-			@lw.flush unless @lw.empty?
+			finish_block
 		end
 
 		private def open(e : LabeledParagraph)
 			unless @lw.empty?
 				@lw.flush
-				@pending_whitespace = "\n"
-			end
-			if @pending_whitespace.ends_with? "\n"
-				@io << @pending_whitespace
-				@whitespace_written = true
+				@io << '\n'
 			end
 			indent(e.indent)
 			dedent_label(e.label, align: Alignment::Left)
 		end
 
 		private def close(e : LabeledParagraph)
-			@lw.flush unless @lw.empty?
-			@pending_whitespace = "\n"
+			finish_block
+			@io << '\n'
 			dedent
 		end
 
 		private def open(e : Preformatted)
-			@lw.flush unless @lw.empty?
-			@io << "\n"
+			finish_block
+			@io.ensure_ends_with "\n\n"
 			left_skip = @indentation.sum + @style.preformatted_indent
 			@style.code_style.surround(@io) do
-				e.text.each_line do |line|
+				e.text.each_line.join(@io, '\n') do |line, io|
 					left_skip.times do
-						@io << " "
+						io << ' '
 					end
-					@io << line << "\n"
+					io << line
 				end
 			end
-			@io << "\n"
+			@io.ensure_ends_with "\n\n"
 		end
 
 		private def open(e)
@@ -380,6 +423,7 @@ module Poor
 			@left_skip = skip
 			@next_left_skip = skip
 			update_widths
+			Log.debug { "Left skip is now #{@left_skip}" }
 		end
 
 		def right_skip=(skip : Int32)
@@ -390,6 +434,7 @@ module Poor
 		def next_left_skip=(skip : Int32)
 			@next_left_skip = skip
 			update_widths
+			Log.debug { "Next left skip is now #{@next_left_skip}" }
 		end
 
 		private def update_widths
@@ -474,6 +519,7 @@ module Poor
 			unless @left_skip == this_left_skip
 				update_widths
 			end
+			Log.debug { "Printing #{this_left_skip} spaces of indent" }
 			@io << " " * this_left_skip
 			print_line(@io, @words, justify ? this_line_width : 0)
 			@words = [] of Word

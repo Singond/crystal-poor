@@ -40,9 +40,24 @@ module Poor
 			end
 		end
 
-		def pretty_print(pp : PrettyPrint)
+		private def pretty_print(pp : PrettyPrint)
 			selfname = self.class.name.split("::").last
-			pp.list("#{selfname}{", children, "}")
+			pp.text "#{selfname}{"
+			pp.group(indent: 2) do
+				pp.breakable
+				yield
+			end
+			pp.breakable
+			pp.text "}"
+		end
+
+		def pretty_print(pp : PrettyPrint)
+			pretty_print(pp) do
+				children.each_with_index do |c, idx|
+					pp.comma if idx > 0
+					c.pretty_print(pp)
+				end
+			end
 		end
 
 		def each
@@ -291,7 +306,9 @@ module Poor
 		end
 
 		def pretty_print(pp : PrettyPrint)
-			pp.text @text
+			pretty_print(pp) do
+				@text.pretty_print(pp)
+			end
 		end
 	end
 
@@ -401,6 +418,18 @@ module Poor
 		Paragraph.new(*content)
 	end
 
+	struct Heading < Container
+		getter level : Int32
+
+		def initialize(content, @level)
+			super(content)
+		end
+	end
+
+	def heading(*content, level)
+		Heading.new(*content, level)
+	end
+
 	struct Preformatted < Markup
 		def initialize(@text : String)
 		end
@@ -410,11 +439,17 @@ module Poor
 		end
 
 		def inspect(io : IO)
-			io << @text
+			io << '\\'
+			io << self.class.name.split("::").last.downcase
+			io << "{"
+			@text.inspect(io)
+			io << "}"
 		end
 
 		def pretty_print(pp : PrettyPrint)
-			pp.text @text
+			pretty_print(pp) do
+				@text.pretty_print(pp)
+			end
 		end
 	end
 

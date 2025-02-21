@@ -44,6 +44,10 @@ class String
 		l.last.size.should be <= width
 	end
 
+	def decolorized
+		gsub(/\e\[[0-9]+m/, "")
+	end
+
 	# Ensure newlines are not interpreted in failure messages.
 	def inspect()
 		"\n" + self
@@ -244,7 +248,7 @@ describe Paragraph do
 		end
 	end
 	context "when line length is not set" do
-		pending "is separated from surrounding text by blank lines" do
+		it "is separated from surrounding text by blank lines" do
 			style = TerminalStyle.new()
 			m = markup("Line outside paragraph.",
 				paragraph(<<-PAR),
@@ -285,6 +289,111 @@ describe Paragraph do
 
 				EXPECTED
 				#-------------- 40 chars --------------#
+		end
+	end
+end
+
+describe Heading do
+	context "of level one" do
+		it "is dedented and in uppercase" do
+			m = markup(
+				heading("Lorem ipsum", level: 1),
+				paragraph(<<-PAR)
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				LOREM IPSUM
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+				EXPECTED
+		end
+		it "is separated from previous paragraph by blank line" do
+			m = markup(
+				heading("Lorem ipsum", level: 1),
+				paragraph(<<-PAR),
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+				heading("Dolor sit amet", level: 1),
+				paragraph(<<-PAR)
+					Curabitur tellus odio, cursus et ipsum sit amet, \
+					aliquam tempus nisi. \
+					Ut eleifend vehicula augue, eget tincidunt elit ullamcorper.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				LOREM IPSUM
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+
+				DOLOR SIT AMET
+				  Curabitur tellus odio, cursus et ipsum sit amet, aliquam
+				  tempus nisi. Ut eleifend vehicula augue, eget tincidunt
+				  elit ullamcorper.
+				EXPECTED
+		end
+	end
+	context "of level two" do
+		it "is dedented to half margin" do
+			m = markup(
+				heading("Lorem ipsum", level: 2),
+				paragraph(<<-PAR)
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				 Lorem ipsum
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+				EXPECTED
+		end
+		it "is separated from previous paragraph by blank line" do
+			m = markup(
+				heading("Lorem ipsum", level: 1),
+				paragraph(<<-PAR),
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+				heading("Dolor sit amet", level: 2),
+				paragraph(<<-PAR)
+					Curabitur tellus odio, cursus et ipsum sit amet, \
+					aliquam tempus nisi. \
+					Ut eleifend vehicula augue, eget tincidunt elit ullamcorper.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				LOREM IPSUM
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+
+				 Dolor sit amet
+				  Curabitur tellus odio, cursus et ipsum sit amet, aliquam
+				  tempus nisi. Ut eleifend vehicula augue, eget tincidunt
+				  elit ullamcorper.
+				EXPECTED
 		end
 	end
 end
@@ -541,6 +650,26 @@ describe UnorderedList do
 			EXPECTED
 			#---------------------------------- 80 chars ----------------------------------#
 	end
+	it "is separated from surrounding paragraphs" do
+		m = markup(
+			paragraph("Donec sit amet facilisis lectus."),
+			unordered_list(
+				item("Curabitur pulvinar purus imperdiet."),
+				item("Sed rutrum pulvinar sapien eget feugiat."),
+			),
+			paragraph("Proin elementum risus ut leo porttitor tristique.")
+		)
+		formatted = format_to_s m, wrap_80
+		formatted.should eq <<-EXPECTED
+			Donec sit amet facilisis lectus.
+
+			  * Curabitur pulvinar purus imperdiet.
+			  * Sed rutrum pulvinar sapien eget feugiat.
+
+			Proin elementum risus ut leo porttitor tristique.
+
+			EXPECTED
+	end
 end
 
 describe Item do
@@ -652,5 +781,44 @@ describe Preformatted do
 
 			EXPECTED
 			#------------------------ 60 chars ------------------------#
+	end
+
+	it "is separated from surrounding paragraphs by blank lines" do
+		m = markup(
+			paragraph(
+				"Nascetur neque suspendisse, ante in aliquet suspendisse. ",
+				"Vivamus curabitur semper fames etiam maecenas lectus."),
+			preformatted(<<-PRE),
+				public static void main (String... args) {
+				    System.out.prinln("Hello, world!");
+				}
+				PRE
+			paragraph(
+				"Magna feugiat in dui morbi nulla etiam duis donec quis. ",
+				"Nulla dolor dapibus sit aliquam hac ex vehicula torquent.")
+		)
+		style = wrap_60
+		style.code_style = Colorize.with
+		format_to_s(m, style).should eq <<-EXPECTED
+			Nascetur neque suspendisse, ante in aliquet suspendisse.
+			Vivamus curabitur semper fames etiam maecenas lectus.
+
+			    public static void main (String... args) {
+			        System.out.prinln("Hello, world!");
+			    }
+
+			Magna feugiat in dui morbi nulla etiam duis donec quis.
+			Nulla dolor dapibus sit aliquam hac ex vehicula torquent.
+
+			EXPECTED
+		# Using terminal colors may cause additional problems:
+		colorized = format_to_s(m, wrap_60)
+		lines = colorized.each_line.to_a
+		lines[1].should end_with "maecenas lectus."
+		lines[2].should be_empty
+		lines[3].should_not be_empty, "Too many blank lines before if colored"
+		lines[5].strip.should start_with "}"
+		lines[6].should be_empty
+		lines[7].should_not be_empty, "Too many blank lines after if colored"
 	end
 end
