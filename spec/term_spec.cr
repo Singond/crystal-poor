@@ -345,6 +345,57 @@ describe Heading do
 				EXPECTED
 		end
 	end
+	context "of level two" do
+		it "is dedented to half margin" do
+			m = markup(
+				heading("Lorem ipsum", level: 2),
+				paragraph(<<-PAR)
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				 Lorem ipsum
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+				EXPECTED
+		end
+		it "is separated from previous paragraph by blank line" do
+			m = markup(
+				heading("Lorem ipsum", level: 1),
+				paragraph(<<-PAR),
+					Aliquam tortor lectus, convallis sit amet tristique ac, \
+					rhoncus eu lectus. \
+					Pellentesque tempus eleifend eros in elementum.
+					PAR
+				heading("Dolor sit amet", level: 2),
+				paragraph(<<-PAR)
+					Curabitur tellus odio, cursus et ipsum sit amet, \
+					aliquam tempus nisi. \
+					Ut eleifend vehicula augue, eget tincidunt elit ullamcorper.
+					PAR
+			)
+			style = wrap_60
+			style.left_margin = 2
+			formatted = format_to_s(m, style)
+			formatted.rstrip.decolorized.should eq <<-EXPECTED
+				LOREM IPSUM
+				  Aliquam tortor lectus, convallis sit amet tristique ac,
+				  rhoncus eu lectus. Pellentesque tempus eleifend eros in
+				  elementum.
+
+				 Dolor sit amet
+				  Curabitur tellus odio, cursus et ipsum sit amet, aliquam
+				  tempus nisi. Ut eleifend vehicula augue, eget tincidunt
+				  elit ullamcorper.
+				EXPECTED
+		end
+	end
 end
 
 describe OrderedList do

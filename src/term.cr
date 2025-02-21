@@ -243,6 +243,8 @@ module Poor
 			if e.level == 1
 				@upcase += 1
 				indent(-@style.left_margin)
+			elsif e.level == 2
+				indent(-@style.left_margin // 2)
 			end
 			@bold += 1
 		end
@@ -250,7 +252,7 @@ module Poor
 		private def close(e : Heading)
 			@lw.flush unless @lw.empty?
 			@bold -= 1
-			if e.level == 1
+			if e.level == 1 || e.level == 2
 				dedent
 				@upcase -= 1
 			end
