@@ -416,6 +416,18 @@ module Poor
 		Paragraph.new(*content)
 	end
 
+	struct Heading < Container
+		getter level : Int32
+
+		def initialize(content, @level)
+			super(content)
+		end
+	end
+
+	def heading(*content, level)
+		Heading.new(*content, level)
+	end
+
 	struct Preformatted < Markup
 		def initialize(@text : String)
 		end

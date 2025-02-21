@@ -1,4 +1,5 @@
 require "colorize"
+require "log"
 require "string_scanner"
 require "./formatter"
 require "./markup"
@@ -36,6 +37,7 @@ module Poor
 		@italic = 0
 		@dim = 0
 		@code = 0
+		@upcase = 0
 		@lists = [] of OrderedList | UnorderedList
 		@numbering = Deque(Int32).new
 		@in_ordered_list = false
@@ -63,10 +65,12 @@ module Poor
 			if @root.nil?
 				@root = element
 			end
+			Log.debug { "Opening #{element}" }
 			open(element)
 		end
 
 		def close_element(element : Markup)
+			Log.debug { "Closing #{element}" }
 			close(element)
 			if element == @root
 				@lw.flush unless @lw.empty?
@@ -78,6 +82,7 @@ module Poor
 		private def indent(amount)
 			@indentation.push amount
 			@lw.left_skip = @indentation.sum
+			@lw.next_left_skip = @indentation.sum
 		end
 
 		# Increases the default `left_skip` by *amount*
@@ -156,6 +161,9 @@ module Poor
 						word = s.rest
 						s.terminate
 					end
+					if @upcase > 0
+						word = word.upcase
+					end
 					trailing_spaces = s[0]?
 					if trailing_spaces
 						word = word[..-(trailing_spaces.size + 1)]
@@ -220,6 +228,31 @@ module Poor
 			unless e.text.empty?
 				@io.ensure_ends_with "\n\n"
 			end
+		end
+
+		private def open(e : Heading)
+			unless @lw.empty?
+				@lw.flush
+				@io << '\n'
+			end
+			unless @skip_paragraph_separation
+				@io.ensure_ends_with "\n\n"
+			end
+			if e.level == 1
+				@upcase += 1
+				indent(-@style.left_margin)
+			end
+			@bold += 1
+		end
+
+		private def close(e : Heading)
+			@lw.flush unless @lw.empty?
+			@bold -= 1
+			if e.level == 1
+				dedent
+				@upcase -= 1
+			end
+			@skip_paragraph_separation = true
 		end
 
 		private def open(e : OrderedList)
@@ -386,6 +419,7 @@ module Poor
 			@left_skip = skip
 			@next_left_skip = skip
 			update_widths
+			Log.debug { "Left skip is now #{@left_skip}" }
 		end
 
 		def right_skip=(skip : Int32)
@@ -396,6 +430,7 @@ module Poor
 		def next_left_skip=(skip : Int32)
 			@next_left_skip = skip
 			update_widths
+			Log.debug { "Next left skip is now #{@next_left_skip}" }
 		end
 
 		private def update_widths
@@ -480,6 +515,7 @@ module Poor
 			unless @left_skip == this_left_skip
 				update_widths
 			end
+			Log.debug { "Printing #{this_left_skip} spaces of indent" }
 			@io << " " * this_left_skip
 			print_line(@io, @words, justify ? this_line_width : 0)
 			@words = [] of Word
