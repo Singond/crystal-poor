@@ -306,7 +306,9 @@ module Poor
 		end
 
 		def pretty_print(pp : PrettyPrint)
-			@text.pretty_print(pp)
+			pretty_print(pp) do
+				@text.pretty_print(pp)
+			end
 		end
 	end
 
