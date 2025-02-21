@@ -58,16 +58,20 @@ describe Markdown do
 		end
 
 		it "can parse headings" do
-			# TODO: Change Bold to heading, once implemented
-			doc.children[0].should be_a Bold
+			doc.children[0].should be_a Heading
+			doc.children[0].as(Heading).level.should eq 1
 			doc.children[0].text.should eq "Lorem Ipsum"
-			doc.children[2].should be_a Bold
+			doc.children[2].should be_a Heading
+			doc.children[2].as(Heading).level.should eq 2
 			doc.children[2].text.should eq "Dolor Sit Amet"
-			doc.children[4].should be_a Bold
+			doc.children[4].should be_a Heading
+			doc.children[4].as(Heading).level.should eq 3
 			doc.children[4].text.should eq "Vestibulum Laoreet"
-			doc.children[6].should be_a Bold
+			doc.children[6].should be_a Heading
+			doc.children[6].as(Heading).level.should eq 3
 			doc.children[6].text.should eq "Ut Congue"
-			doc.children[8].should be_a Bold
+			doc.children[8].should be_a Heading
+			doc.children[8].as(Heading).level.should eq 2
 			doc.children[8].text.should eq "Consectetur Adipisci Elit"
 		end
 
@@ -90,7 +94,8 @@ describe Markdown do
 		doc = parse(<<-MARKDOWN)
 		##
 		MARKDOWN
-		doc.children[0].should be_a Bold
+		doc.children[0].should be_a Heading
+		doc.children[0].as(Heading).level.should eq 2
 	end
 
 	context "with setext-style headings" do
@@ -119,16 +124,20 @@ describe Markdown do
 		end
 
 		it "can parse headings" do
-			# TODO: Change Bold to heading, once implemented
-			doc.children[0].should be_a Bold
+			doc.children[0].should be_a Heading
+			doc.children[0].as(Heading).level.should eq 1
 			doc.children[0].text.should eq "Lorem Ipsum"
-			doc.children[2].should be_a Bold
+			doc.children[2].should be_a Heading
+			doc.children[2].as(Heading).level.should eq 2
 			doc.children[2].text.should eq "Dolor Sit Amet"
-			doc.children[4].should be_a Bold
+			doc.children[4].should be_a Heading
+			doc.children[4].as(Heading).level.should eq 3
 			doc.children[4].text.should eq "Vestibulum Laoreet"
-			doc.children[6].should be_a Bold
+			doc.children[6].should be_a Heading
+			doc.children[6].as(Heading).level.should eq 3
 			doc.children[6].text.should eq "Ut Congue"
-			doc.children[8].should be_a Bold
+			doc.children[8].should be_a Heading
+			doc.children[8].as(Heading).level.should eq 2
 			doc.children[8].text.should eq "Consectetur Adipisci Elit"
 		end
 

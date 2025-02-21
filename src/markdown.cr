@@ -297,7 +297,7 @@ module Poor::Markdown
 		end
 
 		def markup : Markup
-			Bold.new(content)  # TODO: Change to heading
+			Heading.new(content, level: level)
 		end
 	end
 
