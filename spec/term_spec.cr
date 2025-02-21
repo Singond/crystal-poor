@@ -44,6 +44,10 @@ class String
 		l.last.size.should be <= width
 	end
 
+	def decolorized
+		gsub(/\e\[[0-9]+m/, "")
+	end
+
 	# Ensure newlines are not interpreted in failure messages.
 	def inspect()
 		"\n" + self
