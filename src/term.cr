@@ -139,6 +139,18 @@ module Poor
 			end
 		end
 
+		private def finish_block
+			unless @lw.empty?
+				@lw.flush
+			end
+		end
+
+		private def separate_from_previous_block(separator)
+			unless @skip_paragraph_separation
+				@io.ensure_ends_with separator
+			end
+		end
+
 		private def open(e : PlainText)
 			return if e.text.empty?
 			if @code > 0
@@ -211,13 +223,8 @@ module Poor
 		end
 
 		private def open(e : Paragraph)
-			unless @lw.empty?
-				@lw.flush
-				@io << '\n'
-			end
-			unless @skip_paragraph_separation
-				@io.ensure_ends_with "\n\n"
-			end
+			finish_block
+			separate_from_previous_block "\n\n"
 			@skip_paragraph_separation = false
 			return if e.text.empty?
 			indent_one(@style.paragraph_indent)
@@ -231,13 +238,8 @@ module Poor
 		end
 
 		private def open(e : Heading)
-			unless @lw.empty?
-				@lw.flush
-				@io << '\n'
-			end
-			unless @skip_paragraph_separation
-				@io.ensure_ends_with "\n\n"
-			end
+			finish_block
+			separate_from_previous_block "\n\n"
 			if e.level == 1
 				@upcase += 1
 				indent(-@style.left_margin)
@@ -256,27 +258,27 @@ module Poor
 		end
 
 		private def open(e : OrderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			indent(@style.list_indent)
 			@lists.push e
 			@numbering.push 0
 		end
 
 		private def close(e : OrderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@numbering.pop unless @numbering.empty?
 			@lists.pop unless @lists.empty?
 			dedent
 		end
 
 		private def open(e : UnorderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			indent(@style.list_indent)
 			@lists.push e
 		end
 
 		private def close(e : UnorderedList)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@lists.pop unless @lists.empty?
 			dedent
 		end
@@ -296,7 +298,7 @@ module Poor
 		end
 
 		private def close(e : Item)
-			@lw.flush unless @lw.empty?
+			finish_block
 		end
 
 		private def open(e : LabeledParagraph)
@@ -309,13 +311,13 @@ module Poor
 		end
 
 		private def close(e : LabeledParagraph)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@io << '\n'
 			dedent
 		end
 
 		private def open(e : Preformatted)
-			@lw.flush unless @lw.empty?
+			finish_block
 			@io.ensure_ends_with "\n\n"
 			left_skip = @indentation.sum + @style.preformatted_indent
 			@style.code_style.surround(@io) do
