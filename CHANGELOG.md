@@ -1,8 +1,8 @@
 Changelog
 =========
 
-[Unreleased]
-------------
+[0.4.0] - 2025-02-22
+--------------------
 ### Added
 - Output can now be generated on the fly, without building the whole
   `Markup` object first. Instead, individual elements can be opened
