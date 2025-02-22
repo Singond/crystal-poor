@@ -8,10 +8,14 @@ Changelog
   `Markup` object first. Instead, individual elements can be opened
   and closed as needed and output is generated immediately.
   To use this feature, see the `Poor::Stream` class.
+- Basic Markdown parser, which can read a Markdown file and convert
+  it to `Markup` object. See the `Poor::Markdown` module.
 
 ### Fixed
 - Printing of preformatted text blocks in terminal.
   Previously, the text of the block was duplicated.
+- Separation of paragraphs from surrounding text,
+  which sometimes lacked the blank line.
 
 [0.3.0] - 2024-09-05
 --------------------
