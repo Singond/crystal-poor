@@ -51,12 +51,16 @@ module Poor
 			pp.text "}"
 		end
 
+		private def pretty_print_children(pp : PrettyPrint)
+			children.each_with_index do |c, idx|
+				pp.comma if idx > 0
+				c.pretty_print(pp)
+			end
+		end
+
 		def pretty_print(pp : PrettyPrint)
 			pretty_print(pp) do
-				children.each_with_index do |c, idx|
-					pp.comma if idx > 0
-					c.pretty_print(pp)
-				end
+				pretty_print_children(pp)
 			end
 		end
 
@@ -423,6 +427,14 @@ module Poor
 
 		def initialize(content, @level)
 			super(content)
+		end
+
+		def pretty_print(pp : PrettyPrint)
+			pretty_print(pp) do
+				pp.text "level=#{level} "
+				pp.comma
+				pretty_print_children(pp)
+			end
 		end
 	end
 
