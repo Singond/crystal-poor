@@ -73,6 +73,95 @@ describe Markup do
 				.should eq "A text with a \e[1mbold\e[0m and \e[2mfaint\e[0m word"
 		end
 	end
+	describe "#each_recursive(&)" do
+		it "enumerates children recursively" do
+			m = markup("a", markup("b", "c", markup("d"), "e"))
+			arr = [] of Markup
+			m.each_recursive do |elem|
+				arr << elem
+			end
+			arr.should eq [m,
+				PlainText.new("a"),
+				Base.new(
+					PlainText.new("b"),
+					PlainText.new("c"),
+					PlainText.new("d"),
+					PlainText.new("e")),
+				PlainText.new("b"),
+				PlainText.new("c"),
+				PlainText.new("d"),
+				PlainText.new("e")]
+		end
+	end
+	describe "#each_start_end(&)" do
+		it "enumerates starting and ending points of each element" do
+			m = markup("x")
+			a = [] of {Markup, Bool}
+			m.each_start_end {|t| a << t}
+			a.should eq [
+				{PlainText.new("x"), true}, {PlainText.new("x"), false}]
+			m = markup(markup("x"), "y")
+			a = [] of {Markup, Bool}
+			m.each_start_end {|t| a << t}
+			a.should eq [
+				{m, true},
+				{PlainText.new("x"), true}, {PlainText.new("x"), false},
+				{PlainText.new("y"), true}, {PlainText.new("y"), false},
+				{m, false}]
+			m = markup("a", markup("b", "c", markup("d", "e"), "f"))
+			a = [] of {Markup, Bool}
+			m.each_start_end {|t| a << t}
+			a.should eq [
+				{m, true},
+				{PlainText.new("a"), true},
+				{PlainText.new("a"), false},
+				{Base.new(
+					PlainText.new("b"),
+					PlainText.new("c"),
+					Base.new(PlainText.new("d"), PlainText.new("e")),
+					PlainText.new("f")), true},
+				{PlainText.new("b"), true},
+				{PlainText.new("b"), false},
+				{PlainText.new("c"), true},
+				{PlainText.new("c"), false},
+				{Base.new(PlainText.new("d"), PlainText.new("e")), true},
+				{PlainText.new("d"), true},
+				{PlainText.new("d"), false},
+				{PlainText.new("e"), true},
+				{PlainText.new("e"), false},
+				{Base.new(PlainText.new("d"), PlainText.new("e")), false},
+				{PlainText.new("f"), true},
+				{PlainText.new("f"), false},
+				{Base.new(
+					PlainText.new("b"),
+					PlainText.new("c"),
+					Base.new(PlainText.new("d"), PlainText.new("e")),
+					PlainText.new("f")), false},
+				{m, false}]
+		end
+		it "allows rewriting the tree into another representation" do
+			m = markup("a ", bold("bold and also ", italic("italic")), " text")
+			str = ""
+			m.each_start_end do |e, start|
+				if start
+					case e
+					when PlainText
+						str += e.text
+					when Bold
+						str += %q(\textbf{)
+					when Italic
+						str += %q(\textit{)
+					end
+				else
+					case e
+					when Bold, Italic
+						str += '}'
+					end
+				end
+			end
+			str.should eq %q(a \textbf{bold and also \textit{italic}} text)
+		end
+	end
 	describe "#each_start(&)" do
 		it "enumerates starting points of each element" do
 			a = [] of Markup
@@ -110,28 +199,6 @@ describe Markup do
 			end
 			str.should eq "abc"
 		end
-		it "allows rewriting the tree into another representation" do
-			m = markup("a ", bold("bold and also ", italic("italic")), " text")
-			str = ""
-			m.each do |e, start|
-				if start
-					case e
-					when PlainText
-						str += e.text
-					when Bold
-						str += %q(\textbf{)
-					when Italic
-						str += %q(\textit{)
-					end
-				else
-					case e
-					when Bold, Italic
-						str += '}'
-					end
-				end
-			end
-			str.should eq %q(a \textbf{bold and also \textit{italic}} text)
-		end
 	end
 	describe "#each_end(&)" do
 		it "enumerates ending points of each element" do
@@ -161,19 +228,19 @@ describe Markup do
 				m]
 		end
 	end
-	describe "#each()" do
+	describe "#each_start_end()" do
 		it "returns an iterator over the start and end of each element" do
 			m = markup("x")
-			m.each.to_a.should eq [
+			m.each_start_end.to_a.should eq [
 				{PlainText.new("x"), true}, {PlainText.new("x"), false}]
 			m = markup(markup("x"), "y")
-			m.each.to_a.should eq [
+			m.each_start_end.to_a.should eq [
 				{m, true},
 				{PlainText.new("x"), true}, {PlainText.new("x"), false},
 				{PlainText.new("y"), true}, {PlainText.new("y"), false},
 				{m, false}]
 			m = markup("a", markup("b", "c", markup("d", "e"), "f"))
-			m.each.to_a.should eq [
+			m.each_start_end.to_a.should eq [
 				{m, true},
 				{PlainText.new("a"), true},
 				{PlainText.new("a"), false},
@@ -257,71 +324,9 @@ describe Markup do
 		m.children[1].children[2].should eq PlainText.new("d")
 		m.children[1].children[3].should eq PlainText.new("e")
 	end
-	it "is enumerable" do
-		m = markup("x")
-		a = [] of {Markup, Bool}
-		m.each {|t| a << t}
-		a.should eq [
-			{PlainText.new("x"), true}, {PlainText.new("x"), false}]
-		m = markup(markup("x"), "y")
-		a = [] of {Markup, Bool}
-		m.each {|t| a << t}
-		a.should eq [
-			{m, true},
-			{PlainText.new("x"), true}, {PlainText.new("x"), false},
-			{PlainText.new("y"), true}, {PlainText.new("y"), false},
-			{m, false}]
-		m = markup("a", markup("b", "c", markup("d", "e"), "f"))
-		a = [] of {Markup, Bool}
-		m.each {|t| a << t}
-		a.should eq [
-			{m, true},
-			{PlainText.new("a"), true},
-			{PlainText.new("a"), false},
-			{Base.new(
-				PlainText.new("b"),
-				PlainText.new("c"),
-				Base.new(PlainText.new("d"), PlainText.new("e")),
-				PlainText.new("f")), true},
-			{PlainText.new("b"), true},
-			{PlainText.new("b"), false},
-			{PlainText.new("c"), true},
-			{PlainText.new("c"), false},
-			{Base.new(PlainText.new("d"), PlainText.new("e")), true},
-			{PlainText.new("d"), true},
-			{PlainText.new("d"), false},
-			{PlainText.new("e"), true},
-			{PlainText.new("e"), false},
-			{Base.new(PlainText.new("d"), PlainText.new("e")), false},
-			{PlainText.new("f"), true},
-			{PlainText.new("f"), false},
-			{Base.new(
-				PlainText.new("b"),
-				PlainText.new("c"),
-				Base.new(PlainText.new("d"), PlainText.new("e")),
-				PlainText.new("f")), false},
-			{m, false}]
-	end
-	it "supports other Enumerable methods" do
-		m = markup("a", markup("b", "c", markup("d"), "e"))
-		arr = [] of Markup
-		m.each_with_object(arr) do |(elem, start), a|
-			a << elem if start
-		end
-		arr.should eq [m,
-			PlainText.new("a"),
-			Base.new(
-				PlainText.new("b"),
-				PlainText.new("c"),
-				PlainText.new("d"),
-				PlainText.new("e")),
-			PlainText.new("b"),
-			PlainText.new("c"),
-			PlainText.new("d"),
-			PlainText.new("e")]
-	end
+
 	it "is iterable" do
-		markup("x").each.should be_a MarkupIterator
+		markup("x").each.should be_a Iterator(Markup)
 	end
 	it "can be indexed with []" do
 		m = markup("a", markup("b", "c", markup("d", "e"), "f"))
@@ -344,6 +349,10 @@ describe Markup do
 		expect_raises(IndexError) do
 			m[2]
 		end
+	end
+	it "supports other Indexable methods" do
+		m = markup("a", "b", "c", "d", "e")
+		m.index(markup("c")).should eq 2
 	end
 end
 

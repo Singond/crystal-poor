@@ -1,8 +1,7 @@
 module Poor
 	# Abstract representation of a marked-up text.
 	abstract struct Markup
-		include Enumerable({Markup,Bool})
-		include Iterable({Markup,Bool})
+		include Indexable(Markup)
 
 		def children
 			[] of Markup
@@ -65,6 +64,26 @@ module Poor
 		end
 
 		def each
+			children.each do |c|
+				yield c
+			end
+		end
+
+		def each
+			children.each
+		end
+
+		def each_recursive
+			each_start do |elem|
+				yield elem
+			end
+		end
+
+		def each_recursive
+			each_start
+		end
+
+		def each_start_end
 			iter = HistIterator.new(([self] of Markup).each)
 			iters = Deque(HistIterator(Markup)).new
 			iters.push iter
@@ -96,21 +115,21 @@ module Poor
 		end
 
 		def each_start
-			each do |elem, start|
+			each_start_end do |elem, start|
 				next unless start
 				yield elem
 			end
 		end
 
 		def each_end
-			each do |elem, start|
+			each_start_end do |elem, start|
 				next if start
 				yield elem
 			end
 		end
 
 		def each_token
-			each do |elem, start|
+			each_start_end do |elem, start|
 				if start
 					yield elem
 				else
@@ -119,17 +138,17 @@ module Poor
 			end
 		end
 
-		def each
+		def each_start_end
 			MarkupIterator.new(self)
 		end
 
 		def each_start
-			each.select {|(_, start)| start}
+			each_start_end.select {|(_, start)| start}
 				.map {|(elem,_)| elem}
 		end
 
 		def each_end
-			each.select {|(_, start)| !start}
+			each_start_end.select {|(_, start)| !start}
 				.map {|(elem,_)| elem}
 		end
 
@@ -137,12 +156,8 @@ module Poor
 			children.size
 		end
 
-		def [](index : Int)
-			children[index]
-		end
-
-		def []?(index : Int)
-			children[index]?
+		def unsafe_fetch(index : Int)
+			children.unsafe_fetch(index)
 		end
 
 		# Converts the rich text into text with ANSI escape codes
@@ -154,7 +169,7 @@ module Poor
 			bold = 0
 			italic = 0
 			dim = 0
-			each do |e, start|
+			each_start_end do |e, start|
 				if start
 					whitespace_written = false
 					case e

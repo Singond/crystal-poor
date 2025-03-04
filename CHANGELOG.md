@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[Unreleased]
+------------
+### Changed
+- The `Enumerable({Markup,Bool})` and `Iterable({Markup, Bool})` modules
+  have been removed from `Markup`. Their functionality is still available
+  using the `each_start_end` methods.
+  Instead, `Markup` now includes `Indexable(Markup)`.
+
 [0.4.0] - 2025-02-22
 --------------------
 ### Added
