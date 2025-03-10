@@ -4,8 +4,8 @@ require "../src/markup"
 
 include Poor
 
-describe Markup do
-	describe "#markup" do
+describe Poor do
+	describe ".markup" do
 		it "creates instances of Markup" do
 			m = markup(bold("text content"))
 			m.should be_a Markup
@@ -27,6 +27,20 @@ describe Markup do
 			abc.children.should eq [a, b, c]
 		end
 	end
+
+	describe ".bold" do
+		it "is a shorthand for Bold.new" do
+			a = bold("some text")
+			b = Bold.new("some text")
+			a.should eq b
+			c = bold("some text", "consisting of", italic("many"), "parts")
+			d = Bold.new("some text", "consisting of", italic("many"), "parts")
+			c.should eq d
+		end
+	end
+end
+
+describe Markup do
 	describe "#text" do
 		it "returns the text content of single element" do
 			m = markup("this is a text")
@@ -48,16 +62,6 @@ describe Markup do
 			markup("a").to_s.should eq "a"
 			m = markup("a ", bold("bold and also ", italic("italic")), " text")
 			m.to_s.should eq "\\base{a \\bold{bold and also \\italic{italic}} text}"
-		end
-	end
-	describe "#bold" do
-		it "is a shorthand for Bold.new" do
-			a = bold("some text")
-			b = Bold.new("some text")
-			a.should eq b
-			c = bold("some text", "consisting of", italic("many"), "parts")
-			d = Bold.new("some text", "consisting of", italic("many"), "parts")
-			c.should eq d
 		end
 	end
 	describe "#to_ansi" do
