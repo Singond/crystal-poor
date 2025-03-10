@@ -38,6 +38,13 @@ describe Poor do
 			c.should eq d
 		end
 	end
+
+	describe ".heading" do
+		it "allows passing level as regular argument" do
+			m = heading(2, "Lorem ipsum")
+			m.level.should eq 2
+		end
+	end
 end
 
 describe Markup do

@@ -453,8 +453,12 @@ module Poor
 		end
 	end
 
-	def heading(*content, level)
+	def heading(*content, level : Int32)
 		Heading.new(*content, level)
+	end
+
+	def heading(level : Int, *content)
+		Heading.new(*content, level: level)
 	end
 
 	struct Preformatted < Markup
