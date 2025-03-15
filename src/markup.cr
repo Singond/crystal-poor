@@ -1,7 +1,7 @@
 module Poor
 	# Abstract representation of a marked-up text.
 	abstract struct Markup
-		include Indexable(Markup)
+		include Indexable::Mutable(Markup)
 
 		def children
 			[] of Markup
@@ -158,6 +158,20 @@ module Poor
 
 		def unsafe_fetch(index : Int)
 			children.unsafe_fetch(index)
+		end
+
+		def unsafe_put(index : Int, value : Markup)
+			children.unsafe_put(index, value)
+		end
+
+		def map_recursive!(&func : Markup -> Markup)
+			mapped = yield self
+			children.map! do |c|
+				c.map_recursive! do |elem|
+					func.call(elem)
+				end
+			end
+			mapped
 		end
 
 		# Converts the rich text into text with ANSI escape codes

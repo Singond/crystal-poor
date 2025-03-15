@@ -365,6 +365,20 @@ describe Markup do
 		m = markup("a", "b", "c", "d", "e")
 		m.index(markup("c")).should eq 2
 	end
+
+	describe "#map_recursive!" do
+		it "returns markup transformed by calling function on each element" do
+			m = markup("a", markup("b", "c", markup("d", "e"), "f"))
+			mapped = m.map_recursive! do |elem|
+				if elem.is_a? PlainText
+					PlainText.new(elem.text.upcase)
+				else
+					elem
+				end
+			end
+			mapped.should eq markup("A", markup("B", "C", markup("D", "E"), "F"))
+		end
+	end
 end
 
 describe Bold do
