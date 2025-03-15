@@ -1,6 +1,8 @@
 require "./markup"
 
-abstract class Poor::BuilderBase
+# A base for objects which enable processing markup trees by opening
+# and closing individual elements.
+abstract class Poor::TreeMaker
 	@parents = Deque(Markup).new
 
 	abstract def open(element : Markup)
@@ -37,7 +39,9 @@ abstract class Poor::BuilderBase
 	end
 end
 
-class Poor::Builder < Poor::BuilderBase
+# Markup builder which assembles the elements into a tree and exposes
+# the root element.
+class Poor::Builder < Poor::TreeMaker
 	@root : Markup?
 
 	def open(element : Markup)
@@ -53,12 +57,16 @@ class Poor::Builder < Poor::BuilderBase
 	def close(element : Markup)
 	end
 
+	# Returns the root element of the built markup tree.
 	def get
 		@root || raise "The builder is empty"
 	end
 end
 
-class Poor::Stream < Poor::BuilderBase
+# Markup processor which enables processing markup elements on the fly
+# by sending the token stream directly to the given formatter.
+# This avoids creating the intermediate markup tree.
+class Poor::Stream < Poor::TreeMaker
 
 	def initialize(@formatter : Poor::Formatter | Array(Markup|Token))
 	end
