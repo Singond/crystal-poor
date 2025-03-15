@@ -55,7 +55,7 @@ describe Builder do
 			b.start(Paragraph.new)
 			b.finish
 			expect_raises(Exception, "closed") do
-				b.open(PlainText.new("x"))
+				b.start(PlainText.new("x"))
 			end
 		end
 	end
@@ -116,7 +116,7 @@ describe Stream do
 			b.start(Paragraph.new)
 			b.finish
 			expect_raises(Exception, "closed") do
-				b.open(PlainText.new("x"))
+				b.start(PlainText.new("x"))
 			end
 		end
 	end
