@@ -11,7 +11,7 @@ module Poor::Markdown
 	def self.parse(io : IO, builder : Poor::Builder | Poor::Stream)
 		builder.start(Base.new)
 		each_top_level_block(io) do |block|
-			builder.add(block.build)
+			builder.add(block)
 		end
 		builder.finish
 	end
@@ -21,7 +21,7 @@ module Poor::Markdown
 	def self.each_top_level_block(io : IO)
 		self.each_block(io) do |block, parents|
 			if parents.empty? && block
-				yield block
+				yield block.build
 			end
 		end
 	end
