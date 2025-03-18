@@ -1,8 +1,8 @@
 Changelog
 =========
 
-[Unreleased]
-------------
+[0.5.0] - 2025-03-18
+--------------------
 ### Added
 - Added new `map_recursive!` method to transform a markup tree by applying
   a function to each element.
